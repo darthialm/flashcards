@@ -67,6 +67,7 @@
 
 <script src="cards.js"></script>
 <script src="sequences.js"></script>
+<script src="pieces.js"></script>
 <script>
 (function () {
   // --- Paramètres Leitner : 3 boîtes ---------------------------------------
@@ -128,10 +129,18 @@
     });
     return out;
   }
+  // Cartes avec photo (pièces de jonction) : catégorie incendie.
+  function pieceCards() {
+    if (typeof PIECES === "undefined") return [];
+    return PIECES.map(function (p) {
+      return { id: hash("piece|" + p.id), cat: "incendie", theme: "Pièces de jonction",
+               q: p.q, a: p.a, img: p.img, imgA: p.imgA };
+    });
+  }
   function buildCards(list) {
     return list.map(function (c) {
       return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
-    }).concat(seqCards());
+    }).concat(pieceCards(), seqCards());
   }
   function loadCache() {
     try {
@@ -300,7 +309,7 @@
     var html = '<div class="card"><div><div class="meta"><span>' + esc(CAT_LABELS[c.cat] || c.cat) + " · " + esc(c.theme) +
       "</span><span>Boîte " + b + retry + "</span></div>" +
       '<div class="q">' + esc(c.q) + "</div>";
-    if (c.img) html += '<img class="stepimg" src="' + esc(c.img) + '" alt="Position actuelle">';
+    if (c.img) html += '<img class="stepimg" src="' + esc(c.img) + '" alt="Photo de la carte">';
     if (revealed) {
       html += '<div class="a">' + esc(c.a) + "</div>";
       if (c.imgA) html += '<img class="stepimg" src="' + esc(c.imgA) + '" alt="Étape suivante">';
