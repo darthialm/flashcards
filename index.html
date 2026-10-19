@@ -35,6 +35,9 @@
   .reveal { background: var(--accent); }
   .ok { background: var(--ok); }
   .ko { background: var(--ko); }
+  .stepimg { display: block; max-width: 100%; max-height: 260px; margin: 14px auto 0; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .tabs { flex-wrap: wrap; }
+  .tab { min-width: 22%; padding: 10px 4px; font-size: .88rem; }
   .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
   .links { margin-top: 18px; display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; }
   .links button, .links label { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
@@ -63,13 +66,14 @@
 </div>
 
 <script src="cards.js"></script>
+<script src="sequences.js"></script>
 <script>
 (function () {
   // --- Paramètres Leitner : 3 boîtes ---------------------------------------
   // Boîte 1 : chaque jour, boîte 2 : tous les 3 jours, boîte 3 : tous les 7 jours.
   var INTERVALS = { 1: 1, 2: 3, 3: 7 };
   var STORAGE_KEY = "leitner-flashcards-v1";
-  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie" };
+  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie", manoeuvre: "Manœuvres" };
 
   // --- Utilitaires ---------------------------------------------------------
   function hash(s) {
@@ -103,10 +107,31 @@
   var SHEET_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv";
   var CACHE_KEY = "leitner-sheet-cache-v1";
 
+  // Cartes « enchaînement » : photo de la position N -> que fait-on ensuite ? -> étape N+1 (avec sa photo).
+  function seqCards() {
+    var out = [];
+    if (typeof SEQUENCES === "undefined") return out;
+    SEQUENCES.forEach(function (seq) {
+      var st = seq.steps;
+      out.push({
+        id: hash("seq|" + seq.id + "|0"), cat: "manoeuvre", theme: seq.title,
+        q: seq.title + " : par quoi commence-t-on ?",
+        a: st[0].do, imgA: st[0].img
+      });
+      for (var i = 0; i < st.length - 1; i++) {
+        out.push({
+          id: hash("seq|" + seq.id + "|" + (i + 1)), cat: "manoeuvre", theme: seq.title,
+          q: "Position actuelle : " + st[i].pos + ". Que fait-on ensuite ?",
+          img: st[i].img, a: st[i + 1].do, imgA: st[i + 1].img
+        });
+      }
+    });
+    return out;
+  }
   function buildCards(list) {
     return list.map(function (c) {
       return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
-    });
+    }).concat(seqCards());
   }
   function loadCache() {
     try {
@@ -229,7 +254,7 @@
   var elStage = document.getElementById("stage");
 
   function renderTabs() {
-    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"]];
+    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"], ["manoeuvre", "Manœuvres"]];
     elTabs.innerHTML = defs.map(function (d) {
       var n = cards.filter(function (c) { return d[0] === "tout" || c.cat === d[0]; }).length;
       return '<button class="tab" data-cat="' + d[0] + '" aria-pressed="' + (currentCat === d[0]) + '">' + d[1] + " (" + n + ")</button>";
@@ -275,7 +300,11 @@
     var html = '<div class="card"><div><div class="meta"><span>' + esc(CAT_LABELS[c.cat] || c.cat) + " · " + esc(c.theme) +
       "</span><span>Boîte " + b + retry + "</span></div>" +
       '<div class="q">' + esc(c.q) + "</div>";
-    if (revealed) html += '<div class="a">' + esc(c.a) + "</div>";
+    if (c.img) html += '<img class="stepimg" src="' + esc(c.img) + '" alt="Position actuelle">';
+    if (revealed) {
+      html += '<div class="a">' + esc(c.a) + "</div>";
+      if (c.imgA) html += '<img class="stepimg" src="' + esc(c.imgA) + '" alt="Étape suivante">';
+    }
     html += "</div></div>";
     html += '<div class="actions">';
     if (!revealed) {

@@ -93,11 +93,64 @@ const SECOURISME = [
 ["Asthme","Asthme : Quelles sont les 3 questions flash à l'arrivée ?","1. Crise habituelle ? / 2. Déjà été réanimé ou intubé ? / 3. Traitements pris ce jour ?"],
 ["Asthme","Asthme : Quels sont les signes de lutte (Bilan B) ?","Tirage (cou/thorax) / battement des ailes du nez/ balancement thoraco-abdominal."],
 ["Asthme","Asthme : Signes d'épuisement/gravité immédiate ?","Parole impossible (mots hachés)/ sueurs/ cyanose/agitation ou somnolence."],
-["Asthme","Asthme : Qu'est-ce que le \"Silence auscultatoire\" ?","Signe de gravité extrême : l'air ne circule plus et on n'entend plus de sifflement"]
+["Asthme","Asthme : Qu'est-ce que le \"Silence auscultatoire\" ?","Signe de gravité extrême : l'air ne circule plus et on n'entend plus de sifflement"],
+["Asthme","Asthme : Quelle est la position d'attente impérative ?","Position assise ou demi-assise (libère la cage thoracique). Ne jamais allonger."],
+["Asthme","Asthme : Peut-on aider à prendre le traitement ?","OUI mais uniquement sur prescription du médecin régulateur (ex: Ventoline)."],
+["Asthme","Asthme : Pourquoi utiliser la chambre d'inhalation ?","Pour que le médicament atteigne les bronches et ne reste pas dans la bouche."],
+["Asthme","Asthme : Que surveiller lors du transport ?","Fréquence respiratoire et SpO2 et état de conscience (risque d'arrêt respi)."],
+["Asthme","Asthme : Quel message transmettre au SAMU ?","Fréquence Respi + SpO2 + Capacité à parler + Antécédents de réanimation."],
+["Urgences","CAT : on arrive sur une pendaison","libérer la victime mais garder le noeud puis RCP (maintien tete aussi)"],
+["Urgences","Dans quel cas on met systématiquement l'O2 ?","Hypothermie <32 / intox CO/ Noyade/ Detresse circulatoire et respiratoire/drepanocytose/ intox aux opiacés/ accident de plongée/ sat trop basse / demande du samu"],
+["Urgences","Morsure/Insecte : CAT morsure de serpent ?","Repos strict (immobilisation de la zone)/pas de garrot/ pas d'aspi-venin."],
+["Bilan","Intoxication : Les 3 voies de pénétration ?","1. Digestive (ingestion) / 2. Respiratoire (inhalation) / 3. Cutanée (contact)."],
+["Urgences","Intoxication : Geste INTERDIT (ingestion) ?","Ne pas faire vomir et ne pas donner à boire (risque de brûlure chimique inverse)."],
+["Bilan","Blast (Explosion) : Les 3 types de lésions ?","Primaire (onde de choc - tympans/poumons), Secondaire (projectiles), Tertiaire (projection du corps)."],
+["Urgences","Compression : Qu'est-ce que le Crush Syndrome ?","Libération de toxines dans le sang après une compression longue (>4h)."],
+["Urgences","Hypothermie : CAT prioritaire ?","Soustraire au froid/ séchage par tamponnement/couverture de survie (face dorée ext)."],
+["Constantes","Hyperthermie (Coup de chaud) : Signes ?","Peau rouge et sèche (arrêt de la sueur)/propos incohérents/ température > 40°C."],
+["Urgences","Hyperthermie : Action immédiate ?","Déshabiller/ refroidir par évaporation (linges humides + ventilateur)."],
+["Urgences","Code couleur NOVI (nombreuses victimes) ?","Noir : victime dont le décès ne fait aucun doute (tete séparée du tronc ou raideur cadaverique) ou inconsciente qui respire pas Rouge : hemo ou detresse vitale ou inconsciente qui respire Jaune: consciente qui respire mais se deplace pas vert: consciente qui peut se deplacer"],
+["Divers","Statuts radios à connaître ?","1 départ en inter (pas faire en detournement) 2 arrivée à l'inter 3 demande de parole (4 pour urgentes) 5 depart centre de soins 6 arrivée au centre de soins 7 retour dispo 8 retour au centre"],
+["Divers","Categorie dage victime ?","Nouveau né né : 0 à 24h Nouveau né 0 à28 jours Nourrisson jusqu'à 1 an Enfant jusqu'à la puberté puis adulte"],
+["Bilan","Comment qualifier la respiration ?","Normale, superficielle, difficile, bruyante"],
+["Bilan","Frequence respi en conditions normales en fonction age","Adulte 12 à 20 Enfant 20 à 30 Nourrisson 30 à 40 Nouveau né 40 à 60"],
+["Bilan","Frequence circu en conditions normales en fonction age","Adulte 60 à 100 Enfant 70 à 140 Nourrisson 100 à 160 Nouveau né 120 à 160"],
+["Bilan","P Q R S T signification ?","Provoqué par Qualité Region Severité Temps"],
+["Bilan","MHTA signification ?","Maladie Hospitalisations Traitements Allergie"],
+["Urgences","Hemmorragie conduite à tenir ?","compression manuelle victime allongée puis pansement compressif adapté, si ça continue garrot et si pas possible pansement hemo et israelien"],
+["Urgences","Obstruction complète conduite à tenir ?","5 claques dans le dos puis 5 compressions abdomens (ou thoraciques pour nourrisson femme enceinte personne obèse ou difficilement mobilisable), puis répeter si necessaire"],
+["Divers","Les cas particuliers de pansements à connaitre ?","Thorax : position demi-assise sur le côté atteint, protection non occlusive.Abdomen Position sur le dos cuisses fléchies ; en cas d’éviscération, ne pas replacer les organes, les envelopper dans un champ stérile humidifié avec du sérum physiologique, sans les comprimer Oeil  allongé et tête calée, yeux fermés ; ne pas toucher au corps étranger."],
+["Divers","Brulures : comment différencier les degrés ?","1er degré :  rougeur de la peau, douloureuse, typiquement observée dans le cas d’un coup de soleil 2eme cloques (phlyctènes) sur une peau rouge luisante, accompagnée d’une douleur vive. 3eme peau blanchâtre, brunâtre ou noirâtre, d’aspect cartonné ou carbonisé, souvent indolore en raison de la destruction des terminaisons nerveuses"],
+["Urgences","Brulure grave : conduite à tenir ?","Supprimer la cause, refroidir si brulure de moins de 30min victime consciente surface brulée <20% chez ladulte et 10% chez l'enfant Retirer vetements non adherents bijoux ceintures Allonger sur une zone non brulée Pansement hydrogel et Protéger du froid dans VSAV"],
+["Urgences","Les cas de mises sous O2 automatiques ?","Hemmorragie Intoxication opiacés Noyade  Detresse respi ou circu Intox CO Accident de Plongée Sat ou Samu"],
+["Divers","Dans quel cas on prend pas le poul radial ?","Chez le nourrisson ou en réanimation on prend le femoral"],
+["Divers","Capteur O2 comment le placer ?","Sur l'annulaire sur doigts propre sans vernis, lumière rouge sur l'ongle"],
+["Divers","Les nombres à retenir pour le score de Wallace (brulure)","10% pour un côté d'une jambe 10% pour un côté du ventre 10% pour un côté du thorax 9% pour deux côtés d'un bras ou pour deux mêmes cotés sur deux bras SINON 1% pour SA main"]
 ];
 
-// Incendie : vide pour l'instant, à remplir plus tard.
-const INCENDIE = [];
+// Incendie : thèmes d'après les titres du Sheet.
+// Pas encore de réponses dans le Sheet pour : ARI (détails), Échelle, extincteurs, cordage, LSPCC, "les 6 règles de sécurité".
+const INCENDIE = [
+["Tuyauterie & raccords","Quel est le diamètre du tuyau semi-rigide de la LDT et de son raccord ?","Tuyau de 22 mm / Raccord de 20 mm"],
+["Tuyauterie & raccords","Quel est le diamètre du raccord associé à un tuyau souple de 45 mm ?","Raccord de 40 mm"],
+["Tuyauterie & raccords","Quel est le diamètre du raccord associé à un tuyau souple de 70 mm ?","Raccord de 65 mm"],
+["Tuyauterie & raccords","Quel est le diamètre du raccord associé à un tuyau souple de 110 mm ?","Raccord de 100 mm"],
+["Tuyauterie & raccords","Quelle est la longueur standard d'un tuyau d'incendie classique (hors LDT) ?","20 mètres"],
+["Tuyauterie & raccords","Quelle est la longueur standard du tuyau de la LDT d'un seul bloc ?","80 mètres"],
+["Tuyauterie & raccords","Quelle est la différence majeure entre le tuyau de LDT (22 mm) et les tuyaux de 45/70 mm ?","Le 22 mm est semi-rigide (l'eau passe même enroulé), les 45/70 mm sont souples (doivent être entièrement déroulés)"],
+["Tuyauterie & raccords","À quoi ressemble visuellement un raccord Guillemin/DSP (45/70/110 mm) ?","Une couronne métallique avec deux crochets extérieurs en demi-lune et un joint noir à l'intérieur"],
+["Matériel & engins","Que signifie le sigle ARI ?","Appareil Respiratoire Isolant"],
+["Matériel & engins","Que signifie le sigle FPT ?","Fourgon Pompe-Tonne"],
+["Matériel & engins","Le Dévidoir Tournant (LDT) est-il mobile ou fixe sur le camion ?","Il est fixe (intégré/accroché à la structure du FPT)"],
+["Matériel & engins","À quoi servent les dévidoirs mobiles à roues accrochés à l'arrière du FPT ?","À transporter et dérouler rapidement 200 m de tuyaux de 70 mm pour l'alimentation"],
+["Matériel & engins","Quelle pièce de jonction permet de séparer une ligne de 70 mm en deux ou trois lignes de 45 mm ?","La division"],
+["Matériel & engins","Quel équipement permet de maintenir une réserve d'air sous pression pour le pompier en milieu enfumé ?","La bouteille d'ARI (air comprimé à 300 bars)"],
+["Matériel & engins","Quel  matériel pour raccorder à un hydrant?","La clé de poteau / le coude d'alimentation d'hydrant"],
+["Tactique & établissements","Quel tuyau de diamètre 45 mm (raccord 40 mm) est principalement utilisé par le binôme ?","Tuyau d'attaque en intérieur"],
+["Tactique & établissements","Quels sont les deux rôles principaux du tuyau souple de 70 mm (raccord 65 mm) ?","L'alimentation (du poteau au camion) et les lignes principales/mouillage"],
+["Tactique & établissements","Quel tuyau est utilisé pour l'aspiration d'eau en plan d'eau ou réserve ?","Tuyau de 110 mm (raccord 100 mm)"],
+["Tactique & établissements","Qu'appelle-t-on un \"gros établissement\" chez les pompiers ?","La ligne de transport principale en 70 mm acheminant un gros débit d'eau sur une longue distance vers une division"]
+];
 
 const CARDS = []
   .concat(SECOURISME.map(([theme, q, a]) => ({ cat: "secourisme", theme, q, a })))
