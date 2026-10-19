@@ -314,6 +314,19 @@
     }
     html += "</div>";
     elStage.innerHTML = html;
+    preloadAhead();
+  }
+
+  // Précharge les photos de la carte en cours (réponse comprise) et des 3 suivantes.
+  var preloaded = {};
+  function preload(src) {
+    if (!src || preloaded[src]) return;
+    preloaded[src] = true;
+    var im = new Image();
+    im.src = src;
+  }
+  function preloadAhead() {
+    queue.slice(0, 4).forEach(function (c) { preload(c.img); preload(c.imgA); });
   }
 
   // --- Actions -------------------------------------------------------------
@@ -398,6 +411,10 @@
 
   startSession();
   showSync(syncMessage);
+  // Une fois la page affichée, on récupère toutes les photos en arrière-plan (environ 0,5 Mo au total).
+  setTimeout(function () {
+    cards.forEach(function (c) { preload(c.img); preload(c.imgA); });
+  }, 300);
 
   syncSheet().then(function (list) {
     cards = buildCards(list);
