@@ -1,467 +1,290 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Révisions 5e — Mathématiques</title>
-  <meta name="description" content="Site de révision tout-en-un pour les élèves de 5e : règles de calcul, triangles, fractions. Fiches de cours et exercices corrigés.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flashcards Leitner</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --line: #dcdad4; --accent: #c8321e; --ok: #1f8a4c; --ko: #c8321e;
+    --b1: #e5483a; --b2: #f0a030; --b3: #2f9e5a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151516; --card: #202022; --text: #f2f2f2; --muted: #9a9aa0; --line: #38383c; --accent: #ef5a47; --ok: #3cc277; --ko: #ef5a47; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.3rem; margin: 8px 0 14px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; font: inherit; cursor: pointer; }
+  .tab[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+  .boxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; border-top: 4px solid var(--c); }
+  .box .n { font-size: 1.5rem; font-weight: 700; }
+  .box .l { font-size: .8rem; color: var(--muted); }
+  .box .d { font-size: .75rem; color: var(--muted); }
+  .status { color: var(--muted); font-size: .9rem; margin-bottom: 10px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 20px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+  .meta { font-size: .8rem; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .q { font-size: 1.2rem; font-weight: 600; }
+  .a { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); font-size: 1.1rem; white-space: pre-wrap; }
+  .actions { display: flex; gap: 10px; margin-top: 14px; }
+  button.act { flex: 1; padding: 14px; border: 0; border-radius: 10px; font: inherit; font-weight: 600; color: #fff; cursor: pointer; }
+  .reveal { background: var(--accent); }
+  .ok { background: var(--ok); }
+  .ko { background: var(--ko); }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .links { margin-top: 18px; display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; }
+  .links button, .links label { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+  .hint { font-size: .75rem; color: var(--muted); margin-top: 8px; }
+  .hidden { display: none; }
+</style>
 </head>
 <body>
+<div class="wrap">
+  <h1>Flashcards · méthode Leitner</h1>
 
-<header class="top">
-  <a href="#/" class="logo"><span class="logo-mark" id="logo-mark">5<sup>e</sup></span><span>Révisions 5<sup>e</sup></span></a>
-  <a href="#/" class="chap-pill" id="chap-pill" hidden></a>
-  <nav id="nav" aria-label="Sections du chapitre"></nav>
-</header>
+  <div class="tabs" id="tabs"></div>
+  <div class="boxes" id="boxes"></div>
+  <div class="status" id="status"></div>
 
-<main>
+  <div id="stage"></div>
 
-  <!-- ===================================================== -->
-  <!-- CHOIX DU CHAPITRE                                      -->
-  <!-- ===================================================== -->
-  <section class="page" data-ch="" data-p="accueil">
-    <div class="hero">
-      <p class="kicker">Mathématiques · 5<sup>e</sup></p>
-      <h1>Quel chapitre veux-tu réviser ?</h1>
-      <p class="lead">Choisis un chapitre : tu y trouveras la fiche de cours, des exercices corrigés qui changent à chaque fois, et un contrôle blanc noté sur 20.</p>
-    </div>
-    <div class="chapters" id="chapters"></div>
-    <p class="small muted">Ta progression est enregistrée uniquement sur cet appareil.
-      <button type="button" id="reset" class="linkbtn">Tout remettre à zéro</button></p>
-  </section>
+  <div class="links">
+    <button id="allBtn">Réviser sans tenir compte du calendrier</button>
+    <button id="exportBtn">Exporter ma progression</button>
+    <label>Importer<input type="file" id="importFile" accept="application/json" class="hidden"></label>
+    <button id="resetBtn">Remettre à zéro</button>
+  </div>
+  <div class="hint">Raccourcis : Espace = voir la réponse · → = je savais · ← = je ne savais pas</div>
+</div>
 
-  <!-- ===================================================== -->
-  <!-- CHAPITRE 1 : RÈGLES DE CALCUL                          -->
-  <!-- ===================================================== -->
-  <section class="page" data-ch="calculs" data-p="accueil" data-title="Accueil">
-    <div class="hero">
-      <p class="kicker">Chapitre 1</p>
-      <h1>Règles de calcul</h1>
-      <p class="lead">Priorités opératoires, parenthèses et vocabulaire des opérations. Relis la fiche, entraîne-toi, puis fais le contrôle blanc.</p>
-      <div class="hero-actions"><a class="btn primary" href="#/calculs/fiche">Lire la fiche</a><a class="btn" href="#/calculs/controle">Faire le contrôle blanc</a></div>
-    </div>
-    <h2 class="section-title">Ta progression</h2>
-    <div class="cards ch-cards"></div>
-  </section>
+<script src="cards.js"></script>
+<script>
+(function () {
+  // --- Paramètres Leitner : 3 boîtes ---------------------------------------
+  // Boîte 1 : chaque jour, boîte 2 : tous les 3 jours, boîte 3 : tous les 7 jours.
+  var INTERVALS = { 1: 1, 2: 3, 3: 7 };
+  var STORAGE_KEY = "leitner-flashcards-v1";
+  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie" };
 
-  <section class="page" data-ch="calculs" data-p="fiche" data-title="Fiche">
-    <h1>Fiche de révision — Règles de calcul</h1>
-    <p class="lead">Les 6 règles à connaître pour calculer sans erreur, et le vocabulaire des opérations.</p>
+  // --- Utilitaires ---------------------------------------------------------
+  function hash(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  function todayStr(offset) {
+    var d = new Date();
+    d.setDate(d.getDate() + (offset || 0));
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
 
-    <article class="card">
-      <h2><span class="badge">1</span> Calculs sans parenthèses</h2>
-      <h3>Sans priorité</h3>
-      <div class="rule"><b>Règle n°1 :</b> lorsqu'il n'y a que des additions et des soustractions, on effectue les calculs <b>de la gauche vers la droite</b>.</div>
-      <div class="rule"><b>Règle n°2 :</b> lorsqu'il n'y a que des multiplications et des divisions, on effectue les calculs <b>de la gauche vers la droite</b>.</div>
-      <div class="demos">
-        <div class="calc-demo" data-name="A" data-expr="32 + 8 − 6 − 9"></div>
-        <div class="calc-demo" data-name="B" data-expr="60 : 6 × 3 : 5"></div>
-      </div>
-      <h3>Avec priorité</h3>
-      <div class="rule"><b>Règle n°3 :</b> la <b>multiplication</b> est prioritaire devant l'addition et la soustraction.</div>
-      <div class="rule"><b>Règle n°4 :</b> la <b>division</b> est prioritaire devant l'addition et la soustraction.</div>
-      <div class="demos">
-        <div class="calc-demo" data-name="A" data-expr="5 + 3 × 7"></div>
-        <div class="calc-demo" data-name="B" data-expr="4 + 12 : 3"></div>
-        <div class="calc-demo" data-name="C" data-expr="50 − 4 + 3 × 6"></div>
-        <div class="calc-demo" data-name="D" data-expr="5 × 8 − 12 : 4"></div>
-      </div>
-      <p class="warnbox"><b>Piège :</b> dans C = 50 − 4 + 3 × 6, on calcule d'abord 3 × 6, puis on fait 50 − 4 <b>avant</b> d'ajouter 18 (de gauche à droite).</p>
-      <a class="btn small-btn" href="#/calculs/sans">S'entraîner →</a>
-    </article>
+  // --- Données -------------------------------------------------------------
+  var cards = CARDS.map(function (c) {
+    return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
+  });
 
-    <article class="card">
-      <h2><span class="badge">2</span> Calculs avec parenthèses</h2>
-      <h3>Parenthèses simples</h3>
-      <div class="rule"><b>Règle n°5 :</b> on commence toujours par effectuer les calculs <b>entre parenthèses</b>.</div>
-      <div class="demos">
-        <div class="calc-demo" data-name="A" data-expr="20 − (4 + 7) − 2"></div>
-        <div class="calc-demo" data-name="B" data-expr="6 + 4 × (12 − 5)"></div>
-      </div>
-      <h3>Parenthèses imbriquées</h3>
-      <div class="rule"><b>Règle n°6 :</b> on commence par effectuer les parenthèses <b>les plus intérieures</b>.</div>
-      <div class="demos">
-        <div class="calc-demo" data-name="A" data-expr="25 − (15 − (4 + 3))"></div>
-        <div class="calc-demo" data-name="B" data-expr="(12 − (5 + 2)) × 4"></div>
-      </div>
-      <div class="tip">
-        <b>À retenir — dans un calcul, on effectue dans l'ordre :</b>
-        <ol class="tight">
-          <li>les calculs entre parenthèses ;</li>
-          <li>les multiplications et les divisions ;</li>
-          <li>les additions et les soustractions.</li>
-        </ol>
-      </div>
-      <a class="btn small-btn" href="#/calculs/parentheses">S'entraîner →</a>
-    </article>
+  var state = load();
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {};
+  }
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function info(id) {
+    return state[id] || { box: 1, due: todayStr(0) };
+  }
 
-    <article class="card">
-      <h2><span class="badge">3</span> Vocabulaire sur les opérations</h2>
-      <div class="table-wrap">
-        <table class="voc">
-          <thead><tr><th>Calcul</th><th>Résultat</th><th>Les nombres s'appellent…</th></tr></thead>
-          <tbody>
-            <tr><td>7 + 3</td><td>la <b>somme</b> de 7 et de 3</td><td>7 et 3 sont les <b>termes</b></td></tr>
-            <tr><td>12 − 4</td><td>la <b>différence</b> de 12 et de 4</td><td>12 et 4 sont les <b>termes</b></td></tr>
-            <tr><td>6 × 4</td><td>le <b>produit</b> de 6 par 4</td><td>6 et 4 sont les <b>facteurs</b></td></tr>
-            <tr><td>20 : 5</td><td>le <b>quotient</b> de 20 par 5</td><td>20 est le <b>dividende</b>, 5 est le <b>diviseur</b></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="rule"><b>Propriété :</b> dans un calcul, c'est la <b>dernière opération effectuée</b> qui dit s'il s'agit d'une somme, d'une différence, d'un produit ou d'un quotient.</div>
-      <h3>Traduire un calcul par une phrase</h3>
-      <ul class="checklist">
-        <li>A = 25 + 4 × 3 : la dernière opération est une addition.<br>A est <b>la somme</b> de 25 et du produit de 4 par 3.</li>
-        <li>B = (5 + 3) × 4 : la dernière opération est une multiplication.<br>B est <b>le produit</b> de la somme de 5 et de 3 par 4.</li>
-        <li>C = 18 : (7 − 1) : la dernière opération est une division.<br>C est <b>le quotient</b> de 18 par la différence de 7 et de 1.</li>
-      </ul>
-      <h3>Traduire une phrase par un calcul</h3>
-      <p class="example">D est la différence de 40 et de la somme de 5 et de 8, donc D = 40 − (5 + 8).</p>
-      <a class="btn small-btn" href="#/calculs/vocabulaire">S'entraîner →</a>
-    </article>
-  </section>
+  // --- État de l'interface -------------------------------------------------
+  var currentCat = "tout";
+  var ignoreSchedule = false;
+  var queue = [];
+  var revealed = false;
+  var sessionDone = 0;
+  var retryIds = {};
 
-  <section class="page" data-ch="calculs" data-p="sans" data-title="Sans parenthèses">
-    <h1>Calculs sans parenthèses</h1>
-    <p class="lead">Calcule et écris le résultat. La correction te montre chaque étape et la règle utilisée.</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Sans priorité (règles 1 et 2)</h2><div class="exercise" data-gen="c-sans"></div></div>
-      <div><h2 class="ex-title">Avec priorité (règles 3 et 4)</h2><div class="exercise" data-gen="c-prio"></div></div>
-    </div>
-  </section>
+  function inScope() {
+    return cards.filter(function (c) { return currentCat === "tout" || c.cat === currentCat; });
+  }
+  function dueCards() {
+    var t = todayStr(0);
+    return inScope().filter(function (c) { return ignoreSchedule || info(c.id).due <= t; });
+  }
+  function startSession() {
+    queue = shuffle(dueCards().slice());
+    // on voit d'abord la boîte 1, puis 2, puis 3 (tri stable après mélange)
+    queue.sort(function (a, b) { return info(a.id).box - info(b.id).box; });
+    revealed = false;
+    sessionDone = 0;
+    retryIds = {};
+    render();
+  }
 
-  <section class="page" data-ch="calculs" data-p="parentheses" data-title="Avec parenthèses">
-    <h1>Calculs avec parenthèses</h1>
-    <p class="lead">Commence toujours par les parenthèses, et par les plus intérieures s'il y en a plusieurs.</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Parenthèses simples (règle 5)</h2><div class="exercise" data-gen="c-par"></div></div>
-      <div><h2 class="ex-title">Parenthèses imbriquées (règle 6)</h2><div class="exercise" data-gen="c-imb"></div></div>
-    </div>
-  </section>
+  // --- Rendu ---------------------------------------------------------------
+  var elTabs = document.getElementById("tabs");
+  var elBoxes = document.getElementById("boxes");
+  var elStatus = document.getElementById("status");
+  var elStage = document.getElementById("stage");
 
-  <section class="page" data-ch="calculs" data-p="ordre" data-title="Par où commencer ?">
-    <h1>Par où commencer ?</h1>
-    <p class="lead">Avant de calculer, il faut savoir quelle opération faire en premier. Clique sur la bonne opération.</p>
-    <div class="exercise" data-gen="c-first"></div>
-  </section>
+  function renderTabs() {
+    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"]];
+    elTabs.innerHTML = defs.map(function (d) {
+      var n = cards.filter(function (c) { return d[0] === "tout" || c.cat === d[0]; }).length;
+      return '<button class="tab" data-cat="' + d[0] + '" aria-pressed="' + (currentCat === d[0]) + '">' + d[1] + " (" + n + ")</button>";
+    }).join("");
+  }
+  function renderBoxes() {
+    var scope = inScope();
+    var counts = { 1: 0, 2: 0, 3: 0 };
+    scope.forEach(function (c) { counts[info(c.id).box]++; });
+    var colors = { 1: "var(--b1)", 2: "var(--b2)", 3: "var(--b3)" };
+    elBoxes.innerHTML = [1, 2, 3].map(function (b) {
+      var d = INTERVALS[b] === 1 ? "chaque jour" : "tous les " + INTERVALS[b] + " jours";
+      return '<div class="box" style="--c:' + colors[b] + '"><div class="n">' + counts[b] + '</div><div class="l">Boîte ' + b + '</div><div class="d">' + d + "</div></div>";
+    }).join("");
+  }
+  function renderStatus() {
+    var scope = inScope();
+    var due = dueCards().length;
+    elStatus.innerHTML = "<span>" + scope.length + " cartes · " + due + (ignoreSchedule ? " à réviser (mode libre)" : " à réviser aujourd'hui") + "</span><span>Faites cette session : " + sessionDone + "</span>";
+  }
+  function nextDueText() {
+    var scope = inScope();
+    var t = todayStr(0);
+    var future = scope.map(function (c) { return info(c.id).due; }).filter(function (d) { return d > t; }).sort();
+    if (!future.length) return "";
+    var p = future[0].split("-");
+    return "Prochaine révision : " + p[2] + "/" + p[1] + "/" + p[0] + ".";
+  }
+  function render() {
+    renderTabs(); renderBoxes(); renderStatus();
+    var scope = inScope();
+    if (!scope.length) {
+      elStage.innerHTML = '<div class="empty">Aucune carte dans cette catégorie pour l\'instant.</div>';
+      return;
+    }
+    if (!queue.length) {
+      elStage.innerHTML = '<div class="empty"><strong>Rien à réviser pour le moment 🎉</strong><br>' + esc(nextDueText()) + "</div>";
+      return;
+    }
+    var c = queue[0];
+    var b = info(c.id).box;
+    var retry = retryIds[c.id] ? " · à retravailler" : "";
+    var html = '<div class="card"><div><div class="meta"><span>' + esc(CAT_LABELS[c.cat] || c.cat) + " · " + esc(c.theme) +
+      "</span><span>Boîte " + b + retry + "</span></div>" +
+      '<div class="q">' + esc(c.q) + "</div>";
+    if (revealed) html += '<div class="a">' + esc(c.a) + "</div>";
+    html += "</div></div>";
+    html += '<div class="actions">';
+    if (!revealed) {
+      html += '<button class="act reveal" id="revealBtn">Voir la réponse</button>';
+    } else {
+      html += '<button class="act ko" id="koBtn">Je ne savais pas</button><button class="act ok" id="okBtn">Je savais</button>';
+    }
+    html += "</div>";
+    elStage.innerHTML = html;
+  }
 
-  <section class="page" data-ch="calculs" data-p="vocabulaire" data-title="Vocabulaire">
-    <h1>Vocabulaire des opérations</h1>
-    <p class="lead">Somme, différence, produit, quotient… et traduire un calcul en phrase (ou l'inverse).</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Les mots à connaître</h2><div class="exercise" data-gen="c-mot"></div></div>
-      <div><h2 class="ex-title">Somme, différence, produit ou quotient ?</h2><div class="exercise" data-gen="c-derniere"></div></div>
-    </div>
-    <h2 class="ex-title">Traduire une phrase par un calcul</h2>
-    <div class="exercise" data-gen="c-phrase"></div>
-    <h2 class="ex-title">Traduire un calcul par une phrase</h2>
-    <div class="exercise" data-gen="c-traduire"></div>
-  </section>
+  // --- Actions -------------------------------------------------------------
+  function answer(knew) {
+    if (!queue.length || !revealed) return;
+    var c = queue.shift();
+    var wasRetry = !!retryIds[c.id];
+    if (!wasRetry) {
+      var cur = info(c.id);
+      var box = knew ? Math.min(3, cur.box + 1) : 1;
+      state[c.id] = { box: box, due: todayStr(INTERVALS[box]) };
+      save();
+      sessionDone++;
+    }
+    if (!knew) {
+      // La carte revient en fin de session pour être revue, sans changer à nouveau sa boîte.
+      retryIds[c.id] = true;
+      queue.push(c);
+    } else if (wasRetry) {
+      delete retryIds[c.id];
+    }
+    revealed = false;
+    render();
+  }
 
-  <section class="page" data-ch="calculs" data-p="controle" data-title="Contrôle blanc" data-exam="1">
-    <h1>Contrôle blanc — Règles de calcul</h1>
-    <p class="lead">10 questions qui mélangent tous les savoir-faire. Une seule tentative par question, comme le jour du devoir !</p>
-    <div class="exercise exam" data-exam="calculs"></div>
-  </section>
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.matches && t.matches(".tab")) {
+      currentCat = t.getAttribute("data-cat");
+      startSession();
+    } else if (t.id === "revealBtn") {
+      revealed = true; render();
+    } else if (t.id === "okBtn") {
+      answer(true);
+    } else if (t.id === "koBtn") {
+      answer(false);
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.target && e.target.tagName === "INPUT") return;
+    if (e.key === " " || e.key === "Enter") {
+      if (!revealed && queue.length) { e.preventDefault(); revealed = true; render(); }
+    } else if (e.key === "ArrowRight") { answer(true); }
+    else if (e.key === "ArrowLeft") { answer(false); }
+  });
 
-  <!-- ===================================================== -->
-  <!-- CHAPITRE 2 : TRIANGLES                                 -->
-  <!-- ===================================================== -->
-  <section class="page" data-ch="triangles" data-p="accueil" data-title="Accueil">
-    <div class="hero">
-      <p class="kicker">Chapitre 2</p>
-      <h1>Triangles</h1>
-      <p class="lead">Constructions à la règle, au compas et au rapporteur, inégalité triangulaire, somme des angles et droites remarquables.</p>
-      <div class="hero-actions"><a class="btn primary" href="#/triangles/fiche">Lire la fiche</a><a class="btn" href="#/triangles/construire">Construire des triangles</a></div>
-    </div>
-    <h2 class="section-title">Ta progression</h2>
-    <div class="cards ch-cards"></div>
-  </section>
+  document.getElementById("allBtn").addEventListener("click", function () {
+    ignoreSchedule = !ignoreSchedule;
+    this.textContent = ignoreSchedule ? "Revenir au calendrier Leitner" : "Réviser sans tenir compte du calendrier";
+    startSession();
+  });
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (confirm("Remettre toute la progression à zéro ?")) {
+      state = {}; save(); startSession();
+    }
+  });
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(state, null, 1)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "progression-leitner-" + todayStr(0) + ".json";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+  document.getElementById("importFile").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var data = JSON.parse(r.result);
+        if (typeof data !== "object" || Array.isArray(data)) throw new Error();
+        state = data; save(); startSession();
+      } catch (e) { alert("Fichier de progression invalide."); }
+    };
+    r.readAsText(f);
+    this.value = "";
+  });
 
-  <section class="page" data-ch="triangles" data-p="fiche" data-title="Fiche">
-    <h1>Fiche de révision — Triangles</h1>
-    <p class="lead">Les trois constructions, les deux propriétés des triangles et les droites remarquables.</p>
-
-    <article class="card">
-      <h2><span class="badge">1</span> Construire un triangle</h2>
-
-      <h3>On connaît les trois côtés</h3>
-      <p class="example">Tracer le triangle ABC tel que AB = 5 cm, AC = 4 cm et BC = 6 cm.</p>
-      <div class="fig-row">
-        <ol class="steps">
-          <li>À la règle, trace le segment [AB] de 5 cm.</li>
-          <li>Au compas, trace un arc de cercle de centre A et de rayon 4 cm.</li>
-          <li>Trace un arc de cercle de centre B et de rayon 6 cm.</li>
-          <li>Les deux arcs se coupent en C. Trace [AC] et [BC].</li>
-        </ol>
-        <div class="fig-box" data-fig="ex-3c"></div>
-      </div>
-
-      <h3>On connaît deux côtés et l'angle compris entre eux</h3>
-      <p class="example">Tracer le triangle RST tel que RT = 6 cm, ST = 4 cm et <span class="ang">RTS</span> = 70°.</p>
-      <div class="fig-row">
-        <ol class="steps">
-          <li>Trace le segment [RT] de 6 cm.</li>
-          <li>Place le centre du rapporteur sur T et le 0° sur [TR]. Repère 70° et trace la demi-droite.</li>
-          <li>Sur cette demi-droite, place S à 4 cm de T.</li>
-          <li>Trace [RS].</li>
-        </ol>
-        <div class="fig-box" data-fig="ex-2c1a"></div>
-      </div>
-
-      <h3>On connaît un côté et les deux angles adjacents</h3>
-      <p class="example">Tracer le triangle EFG tel que EF = 7 cm, <span class="ang">FEG</span> = 110° et <span class="ang">EFG</span> = 40°.</p>
-      <div class="fig-row">
-        <ol class="steps">
-          <li>Trace le segment [EF] de 7 cm.</li>
-          <li>Rapporteur centré sur E, 0° sur [EF] : trace la demi-droite à 110°.</li>
-          <li>Rapporteur centré sur F, 0° sur [FE] : trace la demi-droite à 40°, du même côté.</li>
-          <li>Les deux demi-droites se coupent en G.</li>
-        </ol>
-        <div class="fig-box" data-fig="ex-1c2a"></div>
-      </div>
-      <a class="btn small-btn" href="#/triangles/construire">S'entraîner à construire →</a>
-    </article>
-
-    <article class="card">
-      <h2><span class="badge">2</span> Inégalité triangulaire et somme des angles</h2>
-      <div class="rule"><b>Inégalité triangulaire :</b> dans un triangle, la longueur de chaque côté est toujours <b>inférieure</b> à la somme des longueurs des deux autres côtés. Dans un triangle ABC :
-        <p class="center">AB &lt; AC + CB &nbsp;;&nbsp; AC &lt; AB + BC &nbsp;;&nbsp; BC &lt; BA + AC</p></div>
-      <div class="rule"><b>Somme des angles :</b> dans tout triangle, la <b>somme des mesures des trois angles</b> est égale à <b>180°</b>.</div>
-      <div class="warnbox"><b>Remarques :</b>
-        <ul class="tight">
-          <li>Si une longueur est <b>égale</b> à la somme des deux autres (ex. AB = AC + CB), le triangle est dit <b>aplati</b> (les points sont alignés).</li>
-          <li>Si un triangle ne respecte pas l'une de ces deux propriétés, alors il <b>n'existe pas</b> (on ne peut pas le construire).</li>
-        </ul>
-      </div>
-      <p class="example"><b>Méthode :</b> pour savoir si un triangle est constructible, on compare la <b>plus grande</b> longueur à la somme des deux autres.<br>
-        Avec 4 cm, 5 cm et 8 cm : 4 + 5 = 9 et 8 &lt; 9, donc le triangle existe.</p>
-      <p class="example">Dans ABC, <span class="ang">BAC</span> = 50° et <span class="ang">ABC</span> = 70°, donc <span class="ang">ACB</span> = 180° − 50° − 70° = 60°.</p>
-      <a class="btn small-btn" href="#/triangles/proprietes">S'entraîner →</a>
-    </article>
-
-    <article class="card">
-      <h2><span class="badge">3</span> Droites remarquables et points de concours</h2>
-      <div class="remarkable">
-        <div class="rem-col">
-          <h3>Médiatrices</h3>
-          <p>Droite <b>perpendiculaire à un côté</b> et qui passe par <b>son milieu</b>.</p>
-          <div class="fig-box" data-fig="rem-mediatrices"></div>
-          <p class="small">Les trois médiatrices sont concourantes. Leur point de concours O est le <b>centre du cercle circonscrit</b> au triangle.</p>
-        </div>
-        <div class="rem-col">
-          <h3>Hauteurs</h3>
-          <p>Droite qui passe par <b>un sommet</b> et qui est <b>perpendiculaire au côté opposé</b>.</p>
-          <div class="fig-box" data-fig="rem-hauteurs"></div>
-          <p class="small">Les trois hauteurs sont concourantes. Leur point de concours H est l'<b>orthocentre</b> du triangle.</p>
-        </div>
-        <div class="rem-col">
-          <h3>Médianes</h3>
-          <p>Droite qui passe par <b>un sommet</b> et par <b>le milieu du côté opposé</b>.</p>
-          <div class="fig-box" data-fig="rem-medianes"></div>
-          <p class="small">Les trois médianes sont concourantes. Leur point de concours G est le <b>centre de gravité</b> du triangle.</p>
-        </div>
-      </div>
-      <div class="rule"><b>Propriété :</b> tous les points situés sur la médiatrice de [AB] sont <b>équidistants</b> (à égale distance) de A et de B.</div>
-      <a class="btn small-btn" href="#/triangles/droites">S'entraîner →</a>
-    </article>
-  </section>
-
-  <section class="page" data-ch="triangles" data-p="construire" data-title="Construire">
-    <h1>Construire des triangles</h1>
-    <p class="lead">Utilise les instruments comme sur ta feuille. Quand ta figure est finie, clique sur « Vérifier ».</p>
-    <details class="howto">
-      <summary>Comment utiliser les instruments ?</summary>
-      <ul>
-        <li><b>Nom du point :</b> choisis la lettre dans « Prochain point » <b>avant</b> de placer un point.</li>
-        <li><b>📏 Règle :</b> clique sur le point de départ, puis à l'arrivée. La longueur s'affiche au millimètre.</li>
-        <li><b>◯ Compas :</b> clique sur le centre, puis écarte le compas : le rayon s'affiche. Clique pour tracer.</li>
-        <li><b>◠ Rapporteur :</b> clique sur le sommet de l'angle, puis sur un point du côté de départ (le 0°), puis tourne jusqu'à la bonne mesure et clique.</li>
-        <li><b>● Point :</b> se place exactement sur les intersections (arcs, demi-droites…).</li>
-        <li><b>⊥ Équerre :</b> clique sur une droite ou un segment, puis sur un point : la perpendiculaire est tracée.</li>
-        <li><b>✋ Déplacer :</b> si ta figure sort du cadre, fais glisser la feuille pour la ramener au centre.</li>
-        <li>Les boutons <b>−</b> et <b>+</b> ajustent ton dernier tracé (longueur, rayon ou angle). <b>↶ Annuler</b> efface ton dernier tracé.</li>
-        <li>Sur téléphone, tu peux aussi faire glisser ton doigt du départ jusqu'à l'arrivée.</li>
-      </ul>
-    </details>
-    <div class="mode-row" role="group" aria-label="Type de construction">
-      <span class="small muted">Type :</span>
-      <button type="button" class="chip mode on" data-mode="">Au hasard</button>
-      <button type="button" class="chip mode" data-mode="3c">3 côtés</button>
-      <button type="button" class="chip mode" data-mode="2c1a">2 côtés et 1 angle</button>
-      <button type="button" class="chip mode" data-mode="1c2a">1 côté et 2 angles</button>
-    </div>
-    <div class="exercise" data-gen="t-construire"></div>
-  </section>
-
-  <section class="page" data-ch="triangles" data-p="proprietes" data-title="Inégalité et angles">
-    <h1>Inégalité triangulaire et somme des angles</h1>
-    <p class="lead">Compare la plus grande longueur à la somme des deux autres. Et souviens-toi : 180° en tout !</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Le triangle existe-t-il ?</h2><div class="exercise" data-gen="t-ineg"></div></div>
-      <div><h2 class="ex-title">Somme des angles</h2><div class="exercise" data-gen="t-angles"></div></div>
-    </div>
-  </section>
-
-  <section class="page" data-ch="triangles" data-p="droites" data-title="Droites remarquables">
-    <h1>Droites remarquables</h1>
-    <p class="lead">Médiatrices, hauteurs, médianes : reconnais-les, puis trace-les.</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Reconnaître</h2><div class="exercise" data-gen="t-droites"></div></div>
-      <div><h2 class="ex-title">Propriété de la médiatrice</h2><div class="exercise" data-gen="t-prop"></div></div>
-    </div>
-    <h2 class="ex-title">Tracer la médiatrice d'un segment</h2>
-    <div class="exercise" data-gen="t-trace-med"></div>
-    <h2 class="ex-title">Tracer une hauteur ou une médiane</h2>
-    <div class="exercise" data-gen="t-trace-droite"></div>
-  </section>
-
-  <section class="page" data-ch="triangles" data-p="controle" data-title="Contrôle blanc" data-exam="1">
-    <h1>Contrôle blanc — Triangles</h1>
-    <p class="lead">10 questions, dont des constructions. Une seule tentative par question !</p>
-    <div class="exercise exam" data-exam="triangles"></div>
-  </section>
-
-  <!-- ===================================================== -->
-  <!-- CHAPITRE 3 : FRACTIONS (PARTIE 1)                      -->
-  <!-- ===================================================== -->
-  <section class="page" data-ch="fractions" data-p="accueil" data-title="Accueil">
-    <div class="hero">
-      <p class="kicker">Chapitre 3</p>
-      <h1>Fractions (partie 1)</h1>
-      <p class="lead">Relis la fiche, entraîne-toi sur chaque savoir-faire avec des exercices qui changent à chaque fois, puis teste-toi avec le contrôle blanc.</p>
-      <div class="hero-actions"><a class="btn primary" href="#/fractions/fiche">Lire la fiche</a><a class="btn" href="#/fractions/controle">Faire le contrôle blanc</a></div>
-    </div>
-    <h2 class="section-title">Ta progression</h2>
-    <div class="cards ch-cards"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="fiche" data-title="Fiche">
-    <h1>Fiche de révision — Fractions</h1>
-    <p class="lead">Tous les savoir-faire à maîtriser pour réussir l'évaluation, avec leurs exemples.</p>
-
-    <article class="card">
-      <h2><span class="badge">1</span> Automatismes et tables</h2>
-      <h3>Tables de multiplication</h3>
-      <p>Connaître ses tables par cœur sert à simplifier ou à trouver des fractions égales.</p>
-      <p class="example">7 × 8 = 56, donc si l'on divise 56 par 7, on obtient directement 8 : [[56|7]] = 8.</p>
-      <h3>Écritures décimales à connaître par cœur</h3>
-      <div class="memo">
-        <div>[[1|2]] = 0,5</div><div>[[1|4]] = 0,25</div><div>[[3|4]] = 0,75</div>
-        <div>[[3|2]] = 1,5</div><div>[[4|2]] = 2</div><div>[[5|2]] = 2,5</div>
-        <div>[[1|10]] = 0,1</div><div>[[100|100]] = 1</div><div>[[7|1]] = 7</div>
-      </div>
-      <a class="btn small-btn" href="#/fractions/automatismes">S'entraîner →</a>
-    </article>
-
-    <article class="card">
-      <h2><span class="badge">2</span> Sens des fractions et opérations</h2>
-      <h3>Multiplications à trou (nombre quotient)</h3>
-      <p>[[7|3]] est le nombre qui, multiplié par 3, donne 7.</p>
-      <p class="example">3 × … = 7 se résout en écrivant la fraction [[7|3]].<br>
-        On vérifie avec l'opération inverse : 3 × [[7|3]] = 7.</p>
-      <p class="tip"><b>Méthode :</b> a × … = b &nbsp;→&nbsp; la réponse est [[b|a]].</p>
-      <a class="btn small-btn" href="#/fractions/quotient">S'entraîner →</a>
-
-      <h3>Lire et placer sur une droite graduée</h3>
-      <ol>
-        <li>Repère l'unité : l'écart entre 0 et 1.</li>
-        <li>Compte en combien de parts égales l'unité est partagée : c'est le dénominateur (2 → demis, 4 → quarts, 10 → dixièmes).</li>
-        <li>Compte les graduations à partir de 0 : vers la droite pour les nombres positifs, vers la gauche pour les négatifs.</li>
-      </ol>
-      <p class="example">Exercice type : placer sur une même droite les nombres [[9|4]] ; 0,25 ; −0,75 ; [[5|4]] ; 2,75 ; [[5|2]] ; −1,25.</p>
-      <div id="fiche-droite" class="nl"></div>
-      <div id="fiche-legende" class="legend"></div>
-      <a class="btn small-btn" href="#/fractions/droite">S'entraîner →</a>
-    </article>
-
-    <article class="card">
-      <h2><span class="badge">3</span> Fractions égales et simplifications</h2>
-      <h3>Reconnaître des fractions égales</h3>
-      <p>On obtient une fraction égale en <b>multipliant</b> ou en <b>divisant</b> le numérateur <b>et</b> le dénominateur par un même nombre non nul.</p>
-      <p class="example">Dans la liste [[28|6]] ; [[7|3]] ; [[140|60]] ; [[15|7]] ; [[56|24]], les fractions égales à [[14|6]] sont :</p>
-      <ul class="checklist">
-        <li>[[7|3]] car on simplifie [[14|6]] par 2 : [[14 ÷ 2|6 ÷ 2]] = [[7|3]]</li>
-        <li>[[140|60]] car on multiplie en haut et en bas par 10 : [[14 × 10|6 × 10]] = [[140|60]]</li>
-        <li>[[56|24]] car on multiplie en haut et en bas par 4 : [[14 × 4|6 × 4]] = [[56|24]]</li>
-      </ul>
-      <p class="warnbox"><b>Pièges :</b> [[28|6]] n'est pas égale (on a multiplié seulement le numérateur) ;
-        [[15|7]] non plus (ajouter 1 en haut et en bas ne donne pas une fraction égale).</p>
-      <a class="btn small-btn" href="#/fractions/egales">S'entraîner →</a>
-
-      <h3>Simplifier une fraction</h3>
-      <p>Simplifier, c'est diviser le numérateur et le dénominateur par un même nombre. On simplifie <b>au maximum</b>, jusqu'à ne plus pouvoir.</p>
-      <p class="example">[[39|12]] : on divise par 3 en haut et en bas → [[39 ÷ 3|12 ÷ 3]] = [[13|4]].</p>
-      <p class="tip"><b>Aide :</b> un nombre est divisible par 2 s'il est pair, par 5 s'il finit par 0 ou 5,
-        par 3 si la somme de ses chiffres est dans la table de 3 (39 : 3 + 9 = 12 ✔).</p>
-      <a class="btn small-btn" href="#/fractions/simplifier">S'entraîner →</a>
-
-      <h3>Formes multiples d'un même nombre</h3>
-      <p>Un même nombre peut s'écrire en écriture décimale, en fraction, ou comme somme d'un entier et d'une fraction.</p>
-      <p class="example">1,2 = [[12|10]] = [[6|5]] = 1 + [[1|5]] = [[120|100]]</p>
-      <a class="btn small-btn" href="#/fractions/formes">S'entraîner →</a>
-    </article>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="automatismes" data-title="Automatismes">
-    <h1>Automatismes</h1>
-    <p class="lead">Réponds vite et juste : ces réflexes font gagner du temps pendant le devoir.</p>
-    <div class="grid2">
-      <div><h2 class="ex-title">Tables de multiplication</h2><div class="exercise" data-gen="tables"></div></div>
-      <div><h2 class="ex-title">Fractions usuelles ↔ décimaux</h2><div class="exercise" data-gen="decimal"></div></div>
-    </div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="quotient" data-title="Nombre quotient">
-    <h1>Multiplications à trou</h1>
-    <p class="lead">Trouve le nombre manquant sous forme de fraction. Rappel : a × … = b → la réponse est la fraction <i>b</i> sur <i>a</i>.
-      Tape ta fraction avec une barre : <code>7/3</code>.</p>
-    <div class="exercise" data-gen="quotient"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="droite" data-title="Droite graduée">
-    <h1>Droite graduée</h1>
-    <p class="lead">Repère l'unité, compte les parts, puis lis ou place le nombre.</p>
-    <h2 class="ex-title">Lire une abscisse</h2>
-    <div class="exercise" data-gen="lire"></div>
-    <h2 class="ex-title">Placer un nombre</h2>
-    <div class="exercise" data-gen="placer"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="egales" data-title="Fractions égales">
-    <h1>Fractions égales</h1>
-    <p class="lead">Coche toutes les fractions égales à celle de l'énoncé. Cherche par quel nombre on a multiplié ou divisé le numérateur <b>et</b> le dénominateur.</p>
-    <div class="exercise" data-gen="egales"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="simplifier" data-title="Simplifier">
-    <h1>Simplifier une fraction</h1>
-    <p class="lead">Simplifie au maximum. Tu peux le faire en plusieurs étapes au brouillon, mais écris seulement le résultat final.</p>
-    <div class="exercise" data-gen="simplifier"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="formes" data-title="Formes multiples">
-    <h1>Formes multiples d'un nombre</h1>
-    <p class="lead">Écris le même nombre de trois façons différentes, comme 1,2 = [[12|10]] = [[6|5]] = 1 + [[1|5]].</p>
-    <div class="exercise" data-gen="formes"></div>
-  </section>
-
-  <section class="page" data-ch="fractions" data-p="controle" data-title="Contrôle blanc" data-exam="1">
-    <h1>Contrôle blanc — Fractions</h1>
-    <p class="lead">10 questions qui mélangent tous les savoir-faire. Une seule tentative par question, comme le jour du devoir !</p>
-    <div class="exercise exam" data-exam="fractions"></div>
-  </section>
-
-</main>
-
-<footer class="foot">
-  <p>Révisions 5<sup>e</sup> — site libre, à modifier et partager.</p>
-</footer>
-
-<script src="script.js"></script>
+  startSession();
+})();
+</script>
 </body>
 </html>
