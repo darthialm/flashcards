@@ -68,6 +68,7 @@
 <script src="cards.js"></script>
 <script src="sequences.js"></script>
 <script src="pieces.js"></script>
+<script src="consignes.js"></script>
 <script>
 (function () {
   // --- Paramètres Leitner : 3 boîtes ---------------------------------------
@@ -137,10 +138,17 @@
                q: p.q, a: p.a, img: p.img, imgA: p.imgA };
     });
   }
+  // Consignes du chef d'agrès, ARI, rôles BAT / BAL : onglet Manœuvres.
+  function consigneCards() {
+    if (typeof CONSIGNES === "undefined") return [];
+    return CONSIGNES.map(function (c) {
+      return { id: hash("consigne|" + c.id), cat: "manoeuvre", theme: "Consignes et ordres", q: c.q, a: c.a };
+    });
+  }
   function buildCards(list) {
     return list.map(function (c) {
       return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
-    }).concat(pieceCards(), seqCards());
+    }).concat(pieceCards(), seqCards(), consigneCards());
   }
   function loadCache() {
     try {
