@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan de manœuvre</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --text:#1d1d1f; --muted:#6b6b70; --line:#dcdad4; --accent:#c8321e; --ok:#1f8a4c; --ko:#c8321e; --ground:#e9e6dc; --road:#b9b9bd; --bld:#cfc7b8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151516; --card:#202022; --text:#f2f2f2; --muted:#9a9aa0; --line:#38383c; --accent:#ef5a47; --ok:#3cc277; --ko:#ef5a47; --ground:#2a2a28; --road:#4a4a4f; --bld:#4b463c; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.3rem; margin:8px 0 6px; }
+  a { color:var(--muted); }
+  .say { background:var(--card); border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:10px; padding:12px 14px; margin:12px 0; font-size:1.1rem; font-weight:600; }
+  .say small { display:block; font-weight:400; color:var(--muted); font-size:.85rem; margin-top:4px; }
+  svg { width:100%; height:auto; background:var(--ground); border:1px solid var(--line); border-radius:10px; touch-action:manipulation; cursor:crosshair; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:12px; }
+  .panel h2 { font-size:1rem; margin:0 0 8px; }
+  .items { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
+  .item { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+  .item b { min-width:1.6em; text-align:center; }
+  button { font:inherit; border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  button.pm { padding:2px 10px; font-weight:700; }
+  button.go { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; padding:10px 16px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+  .res li { margin:4px 0; } .res .ok { color:var(--ok); } .res .ko { color:var(--ko); }
+  .muted { color:var(--muted); font-size:.85rem; }
+  details { margin-top:12px; font-size:.85rem; color:var(--muted); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Plan de manœuvre : prends le bon matériel, pose-le</h1>
+  <a href="index.html">← Retour aux flashcards</a>
+  <div class="say" id="say"></div>
+  <svg id="plan" viewBox="0 0 900 460" role="img" aria-label="Plan vu de dessus"></svg>
+  <div class="muted" id="hint"></div>
+
+  <div class="panel" id="pMat">
+    <h2>1. Matériel que tu prends</h2>
+    <div class="items" id="items"></div>
+    <div class="row"><button class="go" id="matOk">Valider le matériel</button></div>
+  </div>
+
+  <div class="panel hidden" id="pDraw">
+    <h2 id="drawTitle">2. Pose la ligne</h2>
+    <div class="muted" id="drawInfo"></div>
+    <div class="row"><button id="undo">Annuler le dernier point</button><button id="clear">Effacer</button></div>
+  </div>
+
+  <div class="panel hidden" id="pRes"><h2>Résultat</h2><ul class="res" id="res"></ul>
+    <div class="row"><button class="go" id="again">Nouvelle situation</button></div>
+  </div>
+
+  <details>
+    <summary>Règles utilisées (à valider avec ton formateur)</summary>
+    <ul id="rules"></ul>
+  </details>
+</div>
+<script>
+(function () {
+  // ===== Règles (modifiables) =====
+  var PX_PAR_M = 4;          // échelle du plan : 4 px = 1 m
+  var TUYAU_M = 20;          // longueur d'un tuyau
+  var DEVIDOIR_M = 200;      // un dévidoir mobile
+  var MAX_COURONNES = 3;     // PDF ETB-4 : « ne dépasse généralement pas trois »
+  var MARGE = 1.25;          // 25 % de mou toléré par rapport à la ligne droite
+  var RESERVE_M = 10;        // chaque « boucle » de réserve absorbe ~10 m de tuyau (hypothèse)
+  var NS = "http://www.w3.org/2000/svg";
+  var ITEMS = [
+    ["lance", "Lance"], ["t45", "Tuyau de 45"], ["t70", "Tuyau de 70"], ["dev", "Dévidoir mobile (200 m)"],
+    ["div", "Division"], ["col", "Collecteur"], ["ret", "Retenue"], ["clePot", "Clé de poteau"],
+    ["cleBou", "Clé de bouche"], ["cygne", "Col de cygne (110)"], ["cmd", "Commande"]
+  ];
+  var RULES = [
+    "Un tuyau fait 20 m ; un dévidoir mobile 200 m (jusqu'à 2 dévidoirs selon la distance : PDF ETB-4).",
+    "Ligne d'attaque : une lance et 2 à 3 tuyaux de 45 (PDF ETB-3).",
+    "Alimentation à la main : tuyaux de 70, généralement pas plus de 3 ; au-delà, dévidoir (PDF ETB-4).",
+    "Poteau : clé de poteau. Bouche : clé de bouche + retenue. Le col de cygne est pour le tuyau de 110 du conducteur.",
+    "Division d'alimentation : division + ligne de 70 du dévidoir, établie de la division vers l'engin (refoulement), puis de l'engin (alimentation) vers la prise d'eau (PDF ETB-2/4).",
+    "Réserve : à côté de la ligne (jamais dessus, jamais sur la chaussée), une boucle par ~10 m de tuyau en trop (hypothèse à valider : « les tuyaux tournent un peu sur eux-mêmes, sans s'étaler ni s'enchevêtrer »).",
+    "Distances calculées en ligne droite avec 25 % de marge."
+  ];
+  document.getElementById("rules").innerHTML = RULES.map(function (r) { return "<li>" + r + "</li>"; }).join("");
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function rint(a, b) { return Math.round(rand(a, b)); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  var svg = document.getElementById("plan");
+
+  var W, S, phase, matos, stepIdx, pts, reserves, results;
+
+  // ===== Génération d'une situation =====
+  function build() {
+    var bw = 200, bx = rint(200, 500);
+    var door = { x: bx + bw / 2, y: 290, name: "porte" };
+    var tx = clamp(door.x + rint(-160, 160), 90, 810);
+    var pumpR = { x: tx - 16, y: 392, name: "refoulement" };
+    var pumpA = { x: tx + 16, y: 392, name: "alimentation" };
+    var typ = Math.random() < 0.5 ? "poteau" : "bouche";
+    var side = Math.random() < 0.5 ? -1 : 1;
+    var hx = clamp(tx + side * rint(100, 440), 30, 870);
+    if (Math.abs(hx - tx) < 100) hx = clamp(tx - side * rint(100, 300), 30, 870);
+    var hyd = { x: hx, y: 372, name: typ, type: typ };
+    W = { bx: bx, bw: bw, door: door, tx: tx, pumpR: pumpR, pumpA: pumpA, hyd: hyd };
+    var kinds = ["ligne", "alim", "div"];
+    var kind = kinds[rint(0, 2)];
+    var m = function (a, b) { return dist(a, b) / PX_PAR_M; };
+    var eau = typ === "poteau" ? { clePot: [1, 1], cleBou: [0, 0], ret: [0, 0] } : { clePot: [0, 0], cleBou: [1, 1], ret: [1, 1] };
+    var exp = { lance: [0, 0], t45: [0, 0], t70: [0, 0], dev: [0, 0], div: [0, 0], col: [0, 1], ret: [0, 0], clePot: [0, 0], cleBou: [0, 0], cygne: [0, 0], cmd: [0, 1] };
+    var steps = [], say, role;
+    if (kind === "ligne") {
+      var D = m(pumpR, door), n = Math.max(2, Math.ceil(D / TUYAU_M));
+      var nmax = Math.min(3, Math.max(n, Math.ceil(D * MARGE / TUYAU_M)));
+      exp.lance = [1, 1]; exp.t45 = [n, nmax];
+      say = "« Pour l'établissement d'une lance de 500 L/min, tuyaux en couronnes, en reconnaissance… Le point d'attaque est l'entrée du bâtiment, le point d'eau le fourgon. Établissez ! »";
+      role = "Tu es le BAT (sinistre de plain-pied). Le camion est en place devant le bâtiment.";
+      steps.push({ label: "Pose la ligne d'attaque du refoulement du fourgon jusqu'à la porte.", from: pumpR, to: door, hose: "t45", reserve: true });
+    } else if (kind === "alim") {
+      var D2 = m(pumpA, hyd), n2 = Math.ceil(D2 / TUYAU_M);
+      say = "« Alimentez l'engin depuis " + (typ === "poteau" ? "le poteau" : "la bouche") + " d'incendie ! »";
+      role = "Tu es le BAL. Le camion est en place, la prise d'eau est repérée sur le plan.";
+      for (var k in eau) exp[k] = eau[k];
+      if (n2 <= MAX_COURONNES) { exp.t70 = [n2, Math.min(MAX_COURONNES, Math.max(n2, Math.ceil(D2 * MARGE / TUYAU_M)))]; }
+      else { exp.dev = [1, Math.ceil(D2 * MARGE / DEVIDOIR_M)]; }
+      steps.push({ label: "Pose la ligne d'alimentation de la prise d'eau jusqu'à l'entrée « alimentation » de la pompe.", from: hyd, to: pumpA, hose: n2 <= MAX_COURONNES ? "t70" : "dev", reserve: n2 <= MAX_COURONNES });
+    } else {
+      var total = m(door, pumpR) + m(pumpA, hyd);
+      exp.lance = [1, 1]; exp.t45 = [2, 3]; exp.div = [1, 1];
+      exp.dev = [Math.ceil(total / DEVIDOIR_M), Math.max(1, Math.ceil(total * MARGE / DEVIDOIR_M))];
+      for (var k2 in eau) exp[k2] = eau[k2];
+      say = "« Pour l'établissement d'une LDV 500 sur division d'alimentation, avec le dévidoir mobile, en reconnaissance ! » (division au pied du bâtiment, sinistre en étage)";
+      role = "Tu es le BAT + le BAL (matériel des deux). Le camion est en place ; la prise d'eau est repérée.";
+      steps.push({ label: "Dévidoir mobile : déroule de la division (porte) jusqu'au fourgon, raccord en REFOULEMENT.", from: door, to: pumpR, hose: "dev", reserve: false });
+      steps.push({ label: "Puis repars avec le même dévidoir vers la prise d'eau, raccord en ALIMENTATION.", from: pumpA, to: hyd, hose: "dev", reserve: false });
+    }
+    S = { kind: kind, exp: exp, steps: steps, say: say, role: role };
+  }
+
+  // ===== Dessin du plan =====
+  function drawPlan() {
+    svg.innerHTML = "";
+    el("rect", { x: 0, y: 0, width: 900, height: 460, fill: "var(--ground)" }, svg);
+    el("rect", { x: 0, y: 380, width: 900, height: 50, fill: "var(--road)" }, svg);
+    for (var i = 0; i < 18; i++) el("rect", { x: 10 + i * 50, y: 403, width: 26, height: 3, fill: "#eee" }, svg);
+    el("rect", { x: W.bx, y: 60, width: W.bw, height: 230, fill: "var(--bld)", stroke: "#8b8372", "stroke-width": 2 }, svg);
+    t("BÂTIMENT", W.bx + W.bw / 2, 175, 14, "middle");
+    el("rect", { x: W.door.x - 12, y: 286, width: 24, height: 8, fill: "#6b4a2b" }, svg);
+    t("porte", W.door.x, 308, 11, "middle");
+    // camion
+    el("rect", { x: W.tx - 36, y: 388, width: 72, height: 34, rx: 5, fill: "#c8321e", stroke: "#7d1b0e" }, svg);
+    t("FOURGON", W.tx, 410, 11, "middle", "#fff");
+    el("circle", { cx: W.pumpR.x, cy: W.pumpR.y, r: 5, fill: "#2b6cb0" }, svg);
+    el("circle", { cx: W.pumpA.x, cy: W.pumpA.y, r: 5, fill: "#2f9e5a" }, svg);
+    t("refoul.", W.pumpR.x - 8, 380, 10, "end"); t("alim.", W.pumpA.x + 8, 380, 10, "start");
+    // prise d'eau
+    var h = W.hyd;
+    if (h.type === "poteau") { el("rect", { x: h.x - 4, y: h.y - 10, width: 8, height: 14, rx: 2, fill: "#d33" }, svg); }
+    else { el("rect", { x: h.x - 8, y: h.y - 5, width: 16, height: 10, fill: "#555" }, svg); }
+    t(h.type === "poteau" ? "POTEAU" : "BOUCHE", h.x, h.y - 16, 11, "middle");
+    // échelle
+    el("line", { x1: 20, y1: 445, x2: 100, y2: 445, stroke: "#333", "stroke-width": 3 }, svg);
+    t("20 m = 1 tuyau", 60, 440, 10, "middle");
+  }
+  function t(s, x, y, size, anchor, fill) {
+    var e = el("text", { x: x, y: y, "font-size": size, "text-anchor": anchor || "start", fill: fill || "currentColor" }, svg);
+    e.textContent = s; e.style.fill = fill || "var(--text)"; return e;
+  }
+
+  // ===== Matériel =====
+  var counts = {};
+  function renderItems() {
+    var c = document.getElementById("items");
+    c.innerHTML = ITEMS.map(function (it) {
+      return '<div class="item"><span>' + it[1] + '</span><span><button class="pm" data-k="' + it[0] + '" data-d="-1">−</button> <b id="n-' + it[0] + '">' + (counts[it[0]] || 0) + '</b> <button class="pm" data-k="' + it[0] + '" data-d="1">+</button></span></div>';
+    }).join("");
+  }
+  document.getElementById("items").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || !b.dataset.k) return;
+    var k = b.dataset.k; counts[k] = clamp((counts[k] || 0) + (+b.dataset.d), 0, 12);
+    document.getElementById("n-" + k).textContent = counts[k];
+  });
+  function checkMateriel() {
+    var res = [], okAll = true;
+    ITEMS.forEach(function (it) {
+      var k = it[0], e = S.exp[k], have = counts[k] || 0;
+      if (have >= e[0] && have <= e[1]) { if (e[1] > 0 && have > 0) res.push([true, it[1] + " : " + have]); return; }
+      okAll = false;
+      var want = e[0] === e[1] ? e[0] : e[0] + " à " + e[1];
+      res.push([false, it[1] + " : tu en as pris " + have + ", il en fallait " + want + "."]);
+    });
+    return { ok: okAll, lines: res };
+  }
+
+  // ===== Pose =====
+  var polyEl = null, previewEl = null;
+  function curStep() { return S.steps[stepIdx]; }
+  function pathLen(p) { var L = 0; for (var i = 1; i < p.length; i++) L += dist(p[i - 1], p[i]); return L / PX_PAR_M; }
+  function startStep() {
+    var st = curStep();
+    pts = [{ x: st.from.x, y: st.from.y }];
+    document.getElementById("drawTitle").textContent = "2. Pose la ligne (" + (stepIdx + 1) + "/" + S.steps.length + ")";
+    document.getElementById("drawInfo").textContent = st.label + " Clique des points sur le plan ; la ligne s'arrête quand tu touches l'arrivée.";
+    redrawLine();
+  }
+  function redrawLine() {
+    if (polyEl) polyEl.remove();
+    var st = curStep();
+    polyEl = el("polyline", { points: pts.map(function (p) { return p.x + "," + p.y; }).join(" "), fill: "none", stroke: st.hose === "t70" ? "#e07b00" : st.hose === "dev" ? "#333" : "#b4232f", "stroke-width": st.hose === "t70" ? 5 : st.hose === "dev" ? 5 : 3.5, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    var hint = pathLen(pts).toFixed(0) + " m posés (" + (pathLen(pts) / TUYAU_M).toFixed(1) + " tuyaux)";
+    document.getElementById("hint").textContent = hint;
+    // marqueurs départ / arrivée
+    markEnds();
+  }
+  var marks = [];
+  function markEnds() {
+    marks.forEach(function (m) { m.remove(); }); marks = [];
+    var st = curStep();
+    marks.push(el("circle", { cx: st.from.x, cy: st.from.y, r: 8, fill: "none", stroke: "#2b6cb0", "stroke-width": 2.5 }, svg));
+    marks.push(el("circle", { cx: st.to.x, cy: st.to.y, r: 12, fill: "none", stroke: "#1f8a4c", "stroke-width": 2.5, "stroke-dasharray": "4 3" }, svg));
+  }
+  function svgPoint(ev) {
+    var r = svg.getBoundingClientRect();
+    return { x: (ev.clientX - r.left) * 900 / r.width, y: (ev.clientY - r.top) * 460 / r.height };
+  }
+  function insideBuilding(p) { return p.x > W.bx - 2 && p.x < W.bx + W.bw + 2 && p.y < 288; }
+  function onRoad(p) { return p.y > 376 && p.y < 434; }
+  svg.addEventListener("click", function (ev) {
+    var p = svgPoint(ev);
+    if (phase === "draw") {
+      var st = curStep();
+      if (insideBuilding(p)) { document.getElementById("hint").textContent = "Pas à travers le mur : passe par la porte."; return; }
+      if (dist(p, st.to) < 16) p = { x: st.to.x, y: st.to.y };
+      pts.push(p); redrawLine();
+      if (p.x === st.to.x && p.y === st.to.y) finishLine();
+    } else if (phase === "reserve") {
+      placeReserve(p);
+    }
+  });
+  document.getElementById("undo").addEventListener("click", function () { if (phase === "draw" && pts.length > 1) { pts.pop(); redrawLine(); } });
+  document.getElementById("clear").addEventListener("click", function () { if (phase === "draw") { pts = [pts[0]]; redrawLine(); } });
+
+  function finishLine() {
+    var st = curStep(), L = pathLen(pts);
+    results.lines.push({ L: L, step: st, pts: pts.slice() });
+    var need = 0;
+    if (st.hose === "t45" || st.hose === "t70") {
+      var n = counts[st.hose] || 0, avail = n * TUYAU_M;
+      if (L > avail) {
+        results.msgs.push([false, "Il manque du tuyau : " + L.toFixed(0) + " m à couvrir, tu as pris " + n + " tuyau(x) = " + avail + " m."]);
+      } else {
+        results.msgs.push([true, "Ligne posée : " + L.toFixed(0) + " m avec " + n + " tuyau(x) (" + avail + " m)."]);
+        need = Math.round((avail - L) / RESERVE_M);
+      }
+    } else {
+      results.msgs.push([true, "Ligne au dévidoir : " + L.toFixed(0) + " m déroulés."]);
+    }
+    if (need > 0) {
+      reserveNeed = need; reserveSpots = [];
+      phase = "reserve";
+      document.getElementById("drawTitle").textContent = "3. Place la réserve";
+      document.getElementById("drawInfo").textContent = "Il te reste du tuyau. Clique " + need + " fois à côté de la ligne (ni dessus, ni sur la chaussée) pour poser les boucles de réserve : elles doivent tourner un peu sur elles-mêmes sans s'étaler ni s'enchevêtrer.";
+    } else nextStep();
+  }
+
+  var reserveNeed = 0, reserveSpots = [];
+  function distToPath(p, path) {
+    var best = 1e9;
+    for (var i = 1; i < path.length; i++) {
+      var a = path[i - 1], b = path[i], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
+      var u = l2 ? clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / l2, 0, 1) : 0;
+      best = Math.min(best, Math.hypot(p.x - (a.x + u * dx), p.y - (a.y + u * dy)));
+    }
+    return best;
+  }
+  function placeReserve(p) {
+    var path = results.lines[results.lines.length - 1].pts, h = document.getElementById("hint");
+    var d = distToPath(p, path);
+    if (insideBuilding(p) || onRoad(p)) { h.textContent = "Pas sur la chaussée ni dans le bâtiment."; return; }
+    if (d < 12) { h.textContent = "Trop près : la réserve ne doit pas croiser la ligne. Place-la à côté."; return; }
+    if (d > 45) { h.textContent = "Trop loin de la ligne : la réserve reste accrochée à la ligne."; return; }
+    for (var i = 0; i < reserveSpots.length; i++) if (dist(p, reserveSpots[i]) < 40) { h.textContent = "Trop près d'une autre boucle : pas d'enchevêtrement."; return; }
+    reserveSpots.push(p);
+    var g = el("g", {}, svg);
+    el("circle", { cx: p.x, cy: p.y, r: 14, fill: "none", stroke: "#b4232f", "stroke-width": 3 }, g);
+    el("circle", { cx: p.x, cy: p.y, r: 8, fill: "none", stroke: "#b4232f", "stroke-width": 3 }, g);
+    h.textContent = reserveSpots.length + "/" + reserveNeed + " boucles";
+    if (reserveSpots.length >= reserveNeed) {
+      results.msgs.push([true, "Réserve placée (" + reserveNeed + " boucle(s)), à côté de la ligne, sans croisement."]);
+      nextStep();
+    }
+  }
+  function nextStep() {
+    stepIdx++;
+    if (stepIdx < S.steps.length) { phase = "draw"; startStep(); }
+    else finish();
+  }
+  function finish() {
+    phase = "end";
+    document.getElementById("pDraw").classList.add("hidden");
+    // vérif dévidoir
+    if (S.kind === "div") {
+      var tot = results.lines.reduce(function (a, l) { return a + l.L; }, 0), have = counts.dev || 0;
+      if (tot > have * DEVIDOIR_M) results.msgs.push([false, "Il manque du tuyau sur le dévidoir : " + tot.toFixed(0) + " m à couvrir, " + have + " dévidoir(s) = " + have * DEVIDOIR_M + " m."]);
+    }
+    var all = results.mat.concat(results.msgs);
+    var ok = all.every(function (x) { return x[0]; });
+    document.getElementById("res").innerHTML = (ok ? '<li class="ok"><b>Bravo, situation réussie.</b></li>' : '<li class="ko"><b>À revoir :</b></li>') +
+      all.map(function (x) { return '<li class="' + (x[0] ? "ok" : "ko") + '">' + (x[0] ? "✓ " : "✗ ") + esc(x[1]) + "</li>"; }).join("");
+    document.getElementById("pRes").classList.remove("hidden");
+    document.getElementById("hint").textContent = "";
+  }
+
+  document.getElementById("matOk").addEventListener("click", function () {
+    var r = checkMateriel();
+    results.mat = r.lines;
+    if (!r.ok) {
+      // on laisse continuer : l'erreur sera dans le bilan
+    }
+    document.getElementById("pMat").classList.add("hidden");
+    document.getElementById("pDraw").classList.remove("hidden");
+    phase = "draw"; stepIdx = 0; startStep();
+  });
+  document.getElementById("again").addEventListener("click", newGame);
+
+  function newGame() {
+    counts = {}; results = { mat: [], msgs: [], lines: [] }; phase = "mat"; stepIdx = 0; pts = [];
+    build(); drawPlan(); renderItems();
+    document.getElementById("say").innerHTML = esc(S.say) + "<small>" + esc(S.role) + "</small>";
+    document.getElementById("pMat").classList.remove("hidden");
+    document.getElementById("pDraw").classList.add("hidden");
+    document.getElementById("pRes").classList.add("hidden");
+    document.getElementById("hint").textContent = "";
+    polyEl = null; marks = [];
+  }
+  window.__dbg = function () { return { S: S, W: W, counts: counts }; };
+  newGame();
+})();
+</script>
+</body>
+</html>
