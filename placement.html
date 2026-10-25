@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Placement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ee; --card: #ffffff; --text: #1c1b1a; --muted: #6d6a66; --line: #e2ded6;
+    --red: #c8321e; --red-d: #8f1f10; --amber: #e8a33a; --ok: #1f8a4c; --ko: #c8321e; --chip: #f1eee8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131313; --card: #1e1e1f; --text: #f1efec; --muted: #a29f9a; --line: #333; --red: #e4533e; --ok: #3cc277; --ko: #ef5a47; --chip: #2a2a2b; }
+  }
+  * { box-sizing: border-box; }
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  details, .rules { -webkit-user-select: text; user-select: text; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 Barlow, system-ui, sans-serif; }
+  .top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #1b0b07; color: #fff; }
+  .top a { color: #fff; opacity: .75; text-decoration: none; font-size: .9rem; }
+  .top h1 { font: 700 1.3rem/1 "Barlow Condensed", sans-serif; margin: 0; letter-spacing: .02em; }
+  .top .role { margin-left: auto; font-size: .85rem; background: rgba(255,255,255,.12); padding: 4px 10px; border-radius: 99px; }
+  .steps { display: flex; gap: 4px; padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .steps span { flex: 1; min-width: 92px; text-align: center; font: 600 .78rem/1.2 "Barlow Condensed", sans-serif; letter-spacing: .05em; text-transform: uppercase; padding: 6px 4px; border-radius: 6px; color: var(--muted); background: var(--chip); }
+  .steps span.on { background: var(--red); color: #fff; }
+  .steps span.done { background: #f3d9d3; color: var(--red-d); }
+  @media (prefers-color-scheme: dark) { .steps span.done { background: #3a211c; color: #f0a191; } }
+  .steps span b { font-weight: 700; } .steps span i { font-style: normal; }
+  @media (max-width: 640px) {
+    .top { flex-wrap: wrap; gap: 4px 12px; }
+    .top h1 { font-size: 1.15rem; }
+    .top .role { margin-left: 0; width: 100%; font-size: .78rem; }
+    .steps { gap: 3px; padding: 6px 10px; }
+    .steps span { min-width: 0; flex: 0 0 auto; padding: 6px 8px; }
+    .steps span:not(.on) i { display: none; }
+    .steps span.on { flex: 1 1 auto; }
+    .layout { padding: 10px 10px 24px; }
+  }
+  .layout { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px 16px 24px; max-width: 1280px; margin: 0 auto; }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } .side { position: sticky; top: 12px; } }
+  .mapwrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 8px 26px rgba(0,0,0,.08); background: #7fa46a; }
+  #map { display: block; width: 100%; aspect-ratio: 16 / 10; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .toast { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); background: rgba(20,20,20,.86); color: #fff; padding: 6px 14px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
+  .toast.show { opacity: 1; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 18px; height: 5px; border-radius: 3px; vertical-align: middle; margin-right: 5px; border: 1px solid #555; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: 0 8px 26px rgba(0,0,0,.05); }
+  .speaker { display: flex; gap: 10px; align-items: flex-start; }
+  .avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 3px solid var(--red); display: grid; place-items: center; font: 700 .9rem "Barlow Condensed", sans-serif; color: var(--red); }
+  .who { font: 700 .78rem/1 "Barlow Condensed", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .quote { font-weight: 600; font-size: 1.05rem; }
+  .msg { margin-top: 12px; }
+  .msg p { margin: 0 0 8px; }
+  .hint { font-size: .88rem; color: var(--muted); }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  button { font: 600 .95rem Barlow, sans-serif; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 9px 14px; cursor: pointer; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--red); border-color: var(--red); color: #fff; }
+  button.ghost { background: transparent; }
+  .items { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+  .item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); font-size: .93rem; }
+  .item .ctr { display: flex; align-items: center; gap: 6px; }
+  .item button { padding: 2px 10px; font-size: 1rem; border-radius: 7px; }
+  .item b { min-width: 1.4em; text-align: center; }
+  .item.has { border-color: var(--red); }
+  .choices { display: grid; gap: 8px; margin-top: 10px; }
+  .choices button { text-align: left; font-weight: 500; }
+  .choices button.right { border-color: var(--ok); background: rgba(31,138,76,.12); }
+  .choices button.wrong { border-color: var(--ko); background: rgba(200,50,30,.12); }
+  ul.res { list-style: none; padding: 0; margin: 8px 0 0; }
+  ul.res li { padding: 6px 0 6px 26px; position: relative; border-bottom: 1px dashed var(--line); font-size: .93rem; }
+  ul.res li::before { position: absolute; left: 2px; top: 5px; font-weight: 700; }
+  ul.res li.ok::before { content: "✓"; color: var(--ok); }
+  ul.res li.ko::before { content: "✗"; color: var(--ko); }
+  ul.res li .cat { font: 700 .72rem "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; }
+  .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .roles button { text-align: left; padding: 12px; }
+  .roles button b { display: block; font: 700 1.1rem "Barlow Condensed", sans-serif; }
+  .roles button span { font-size: .8rem; color: var(--muted); font-weight: 500; }
+  .score { font: 700 2.2rem/1 "Barlow Condensed", sans-serif; color: var(--red); }
+  details.rules { margin-top: 12px; font-size: .82rem; color: var(--muted); }
+  details.rules li { margin: 3px 0; }
+  .fire { animation: flick 0.9s infinite alternate ease-in-out; transform-origin: center; transform-box: fill-box; }
+  @keyframes flick { from { opacity: .75; transform: scale(.94); } to { opacity: 1; transform: scale(1.06); } }
+  .pulse { animation: pulse 1.3s infinite ease-out; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse { from { opacity: .9; transform: scale(.6); } to { opacity: 0; transform: scale(1.6); } }
+  .smoke { animation: smoke 4s infinite linear; transform-box: fill-box; }
+  @keyframes smoke { from { opacity: .55; transform: translate(0,0) scale(.8); } to { opacity: 0; transform: translate(-3px,-9px) scale(1.8); } }
+  .mine-glow { filter: drop-shadow(0 0 .35px #ffd34d) drop-shadow(0 0 .35px #ffd34d); }
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="index.html">← Accueil</a>
+  <h1>Placement · manœuvre</h1>
+  <span class="role" id="roleTag">Choisis ton rôle</span>
+</div>
+<div class="steps" id="steps"></div>
+<div class="layout">
+  <div>
+    <div class="mapwrap"><svg id="map" viewBox="0 0 120 75" aria-label="Plan de la manœuvre vu de dessus"></svg><div class="toast" id="toast"></div></div>
+    <div class="legend">
+      <span><i style="background:#f3efe4"></i>Tuyau de 45</span>
+      <span><i style="background:#f3efe4;height:8px"></i>Tuyau de 70</span>
+      <span><i style="background:#b8322a"></i>LDT</span>
+      <span><i style="background:#ffd34d"></i>Tes tuyaux</span>
+    </div>
+  </div>
+  <div class="side">
+    <div class="card" id="panel"></div>
+    <details class="rules">
+      <summary>Règles utilisées (à valider avec ton formateur)</summary>
+      <ul id="rules"></ul>
+    </details>
+  </div>
+</div>
+<script src="placement.js"></script>
+</body>
+</html>

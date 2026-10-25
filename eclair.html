@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mode Éclair</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --text:#1d1d1f; --muted:#6b6b70; --line:#dcdad4; --accent:#c8321e; --ok:#1f8a4c; --ko:#c8321e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151516; --card:#202022; --text:#f2f2f2; --muted:#9a9aa0; --line:#38383c; --accent:#ef5a47; --ok:#3cc277; --ko:#ef5a47; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:720px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.3rem; margin:8px 0 6px; }
+  a { color:var(--muted); }
+  .opts { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; align-items:center; font-size:.85rem; color:var(--muted); }
+  .opts button { padding:6px 10px; border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:8px; font:inherit; cursor:pointer; }
+  .opts button[aria-pressed="true"] { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); font-weight:600; }
+  .score { display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .bar { height:8px; background:var(--line); border-radius:6px; overflow:hidden; margin-bottom:12px; }
+  .bar > i { display:block; height:100%; width:100%; background:var(--ok); transform-origin:left; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 20px; min-height:240px; }
+  .role { display:inline-block; background:var(--accent); color:#fff; font-weight:700; border-radius:8px; padding:4px 12px; font-size:1rem; margin-bottom:12px; }
+  .say { font-size:1.2rem; font-weight:600; }
+  .a { margin-top:16px; padding-top:14px; border-top:1px dashed var(--line); font-size:1.1rem; }
+  .late { color:var(--ko); font-weight:600; margin-top:10px; }
+  .actions { display:flex; gap:10px; margin-top:14px; }
+  button.act { flex:1; padding:14px; border:0; border-radius:10px; font:inherit; font-weight:600; color:#fff; cursor:pointer; }
+  .reveal { background:var(--accent); } .ok { background:var(--ok); } .ko { background:var(--ko); }
+  .small { font-size:.75rem; color:var(--muted); margin-top:10px; }
+  .small button { background:none; border:0; color:var(--muted); text-decoration:underline; cursor:pointer; font:inherit; padding:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mode Éclair : réagis vite</h1>
+  <a href="revision.html?cat=manoeuvre">← Retour aux cas particuliers</a>
+  <div class="opts" id="opts"></div>
+  <div class="score" id="score"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="card" id="card"></div>
+  <div class="small">Espace : voir la réponse · → je savais · ← je ne savais pas · <button id="resetStats">remettre les scores à zéro</button></div>
+</div>
+<script src="situations.js"></script>
+<script>
+(function () {
+  var KEY = "eclair-stats-v1";
+  var SECS = [5, 8, 12], secs = 8, roleFilter = "Tous";
+  var ROLES = ["Tous", "BAT", "BAL"];
+  var stats = { ok: 0, ko: 0, slow: 0, times: [], miss: {}, streak: 0, best: 0 };
+  try { var s = JSON.parse(localStorage.getItem(KEY)); if (s) stats = s; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(stats)); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  var cur = null, revealed = false, t0 = 0, timer = null, late = false, last = null;
+  var elCard = document.getElementById("card"), elBar = document.getElementById("bar");
+
+  // Tirage aléatoire (situation x rôle), les ratés reviennent plus souvent.
+  function pool() {
+    var out = [];
+    SITUATIONS.forEach(function (s) {
+      Object.keys(s.who).forEach(function (r) {
+        if (roleFilter !== "Tous" && r !== "Tout le monde" && r.indexOf(roleFilter) < 0) return;
+        if (roleFilter !== "Tous" && r === "Tout le monde" && false) return;
+        var key = s.id + "|" + r;
+        var w = 1 + 2 * (stats.miss[key] || 0);
+        out.push({ key: key, s: s, role: r, w: w });
+      });
+    });
+    return out;
+  }
+  function pick() {
+    var p = pool().filter(function (x) { return x.key !== last; });
+    if (!p.length) p = pool();
+    var tot = p.reduce(function (a, x) { return a + x.w; }, 0), r = Math.random() * tot;
+    for (var i = 0; i < p.length; i++) { r -= p[i].w; if (r <= 0) return p[i]; }
+    return p[p.length - 1];
+  }
+
+  function roleLabel(role) {
+    if (role !== "Tout le monde") return role;
+    if (roleFilter === "Tous") return "Tout le monde";
+    return roleFilter + " (chef ou équipier)";
+  }
+
+  function next() {
+    clearTimeout(timer);
+    cur = pick(); last = cur.key; revealed = false; late = false;
+    t0 = Date.now();
+    elBar.style.transition = "none"; elBar.style.transform = "scaleX(1)"; elBar.style.background = "var(--ok)";
+    void elBar.offsetWidth;
+    elBar.style.transition = "transform " + secs + "s linear, background " + secs + "s linear";
+    elBar.style.transform = "scaleX(0)"; elBar.style.background = "var(--ko)";
+    timer = setTimeout(function () { if (!revealed) { late = true; reveal(); } }, secs * 1000);
+    render();
+  }
+  function reveal() {
+    if (revealed) return;
+    revealed = true; clearTimeout(timer);
+    cur.ms = Date.now() - t0;
+    var w = getComputedStyle(elBar).transform; elBar.style.transition = "none"; elBar.style.transform = w;
+    render();
+  }
+  function grade(knew) {
+    if (!revealed) return;
+    var key = cur.key;
+    if (late) { stats.slow++; }
+    if (knew && !late) {
+      stats.ok++; stats.streak++; if (stats.streak > stats.best) stats.best = stats.streak;
+      stats.times.push(Math.round(cur.ms / 100) / 10); if (stats.times.length > 50) stats.times.shift();
+      if (stats.miss[key]) stats.miss[key]--;
+    } else {
+      stats.ko++; stats.streak = 0; stats.miss[key] = (stats.miss[key] || 0) + 1;
+    }
+    save(); next();
+  }
+  function render() {
+    var avg = stats.times.length ? (stats.times.reduce(function (a, b) { return a + b; }, 0) / stats.times.length).toFixed(1) + " s" : "–";
+    document.getElementById("score").innerHTML =
+      "<span>Réussis : " + stats.ok + " · Ratés : " + stats.ko + " (dont trop lents : " + stats.slow + ")</span>" +
+      "<span>Série : " + stats.streak + " (record " + stats.best + ") · Temps moyen : " + avg + "</span>";
+    var h = '<div class="role">' + esc(roleLabel(cur.role)) + '</div><div class="say">' + esc(cur.s.say) + '</div>';
+    if (revealed) {
+      if (late) h += '<div class="late">Trop lent ! Le temps est écoulé.</div>';
+      h += '<div class="a">' + esc(cur.s.who[cur.role]) + '</div>';
+      h += '<div class="actions"><button class="act ko" id="koBtn">Je ne savais pas</button><button class="act ok" id="okBtn">Je savais</button></div>';
+    } else {
+      h += '<div class="actions"><button class="act reveal" id="revBtn">Voir la réponse</button></div>';
+    }
+    elCard.innerHTML = h;
+  }
+  document.addEventListener("click", function (e) {
+    var id = e.target.id;
+    if (id === "revBtn") reveal(); else if (id === "okBtn") grade(true); else if (id === "koBtn") grade(false);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === " ") { e.preventDefault(); reveal(); }
+    else if (e.key === "ArrowRight") grade(true);
+    else if (e.key === "ArrowLeft") grade(false);
+  });
+  document.getElementById("resetStats").addEventListener("click", function () {
+    if (!confirm("Remettre les scores à zéro ?")) return;
+    stats = { ok: 0, ko: 0, slow: 0, times: [], miss: {}, streak: 0, best: 0 }; save(); next();
+  });
+  function renderOpts() {
+    var h = "<span>Temps :</span>" + SECS.map(function (n) { return '<button data-s="' + n + '" aria-pressed="' + (n === secs) + '">' + n + ' s</button>'; }).join("") +
+      "<span>Rôle :</span>" + ROLES.map(function (r) { return '<button data-r="' + r + '" aria-pressed="' + (r === roleFilter) + '">' + r + '</button>'; }).join("");
+    document.getElementById("opts").innerHTML = h;
+  }
+  document.getElementById("opts").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.s) secs = +b.dataset.s; if (b.dataset.r) roleFilter = b.dataset.r;
+    renderOpts(); next();
+  });
+  renderOpts(); next();
+})();
+</script>
+</body>
+</html>

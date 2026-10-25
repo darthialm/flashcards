@@ -1,6 +1,11 @@
-# Flashcards Leitner (secourisme / incendie)
+# Formation équipier : révision et manœuvres
 
-Page statique : `index.html` + `cards.js`. Aucune installation nécessaire.
+Site statique, tous les fichiers à la racine du dépôt :
+- `index.html` : accueil (Réviser les GDO / Manœuvres incendie).
+- `revision.html?cat=secourisme|incendie|manoeuvre` : flashcards Leitner (+ `cards.js`, `pieces.js`, `sequences.js`, `consignes.js`, photos).
+- `placement.html` + `placement.js` : simulateur de placement (rôle, ordre préparatoire, reconnaissance, « Établissez ! », pose, mise en eau, bilan). Les règles sont en haut de `placement.js` (bloc CFG et RULES).
+- `eclair.html` + `situations.js` : mode chrono (lien depuis « Cas particuliers »).
+- `plan.html` : ancienne version du placement, peut être supprimée.
 
 ## Méthode (3 boîtes)
 - Boîte 1 : révision chaque jour
@@ -25,6 +30,10 @@ Pour ajouter une manœuvre : dépose les photos dans `images/` et ajoute un bloc
 Ces cartes ne viennent pas du Google Sheet (il ne contient pas d'images).
 
 Attention : les photos viennent de documents de formation (SDIS 33, BMPM / SDIS 59). Pour un usage perso, garde le dépôt privé ou ne publie pas le site si ces documents ne sont pas libres de diffusion.
+
+## Cartes avec photos (pièces de jonction)
+`pieces.js` contient les cartes « pièces de jonction » (photo -> « Quelle est cette pièce ? », et nom -> rôle). Elles sont rangées dans l'onglet Incendie.
+Les photos `pj-*.jpg` sont à la racine du dépôt. Source : Info Pompiers (infopompiers.com).
 
 ## Ajouter des cartes
 Les cartes sont lues directement dans le Google Sheet (1er onglet, colonnes Question / Réponse / Catégorie) à chaque ouverture de la page.
