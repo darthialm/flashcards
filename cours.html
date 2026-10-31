@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cours GTO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f4f2ee; --card:#fff; --text:#1c1b1a; --muted:#6d6a66; --line:#e2ded6; --red:#c8321e; --blue:#2b5c8a; --amber:#e8a33a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#131313; --card:#1e1e1f; --text:#f1efec; --muted:#a29f9a; --line:#333; --red:#e4533e; --blue:#8fb6dd; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 Barlow, system-ui, sans-serif; }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 16px 16px 60px; }
+  a { color: var(--red); }
+  .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
+  .kicker { margin-top: 14px; font: 700 .8rem/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--red); }
+  h1 { font: 700 2rem/1.1 "Barlow Condensed", sans-serif; margin: 4px 0 6px; }
+  .sub { color: var(--muted); font-size: .9rem; }
+  .bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  .bar input { flex: 1; min-width: 180px; font: inherit; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); }
+  .bar a.btn, .bar button { font: 600 .9rem Barlow, sans-serif; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--red); background: var(--red); color: #fff; text-decoration: none; cursor: pointer; }
+  .bar button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin: 12px 0 18px; font-size: .92rem; }
+  nav.toc b { font: 700 .8rem "Barlow Condensed", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  nav.toc ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 24px; }
+  @media (max-width: 600px) { nav.toc ol { columns: 1; } }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  section h2 { font: 700 1.3rem/1.15 "Barlow Condensed", sans-serif; margin: 0 0 2px; }
+  section .pg { font-size: .78rem; color: var(--muted); margin-bottom: 10px; }
+  blockquote { margin: 10px 0; padding: 8px 12px; border-left: 4px solid var(--blue); background: rgba(43,92,138,.07); border-radius: 0 8px 8px 0; white-space: pre-wrap; font-size: .95rem; }
+  blockquote .p { display: block; font: 700 .72rem "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); margin-bottom: 2px; font-style: normal; }
+  details.qs { margin-top: 10px; }
+  details.qs summary { cursor: pointer; font-weight: 600; color: var(--red); }
+  .qa { border-top: 1px dashed var(--line); padding: 8px 0; }
+  .qa .q { font-weight: 600; }
+  .qa .a { white-space: pre-wrap; margin-top: 4px; }
+  .qa .d { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: rgba(232,163,58,.14); font-size: .92rem; white-space: pre-wrap; }
+  .qa.hide-a .a, .qa.hide-a .d { filter: blur(6px); cursor: pointer; user-select: none; }
+  mark { background: #ffe58a; color: inherit; }
+  .empty { color: var(--muted); text-align: center; padding: 30px; }
+  .note { font-size: .8rem; color: var(--muted); margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Accueil</a>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div class="sub" id="sub"></div>
+  <div class="bar">
+    <input id="search" type="search" placeholder="Chercher un mot (ex : 20 cm, retenue, R+4)…" aria-label="Chercher dans le cours">
+    <button class="ghost" id="hideBtn" aria-pressed="false">Cacher les réponses</button>
+    <a class="btn" id="cardsLink" href="#">Réviser en flashcards</a>
+  </div>
+  <nav class="toc" id="toc"></nav>
+  <div id="content"></div>
+  <p class="note">Extraits reproduits pour la formation des sapeurs-pompiers (reproduction des textes autorisée par la DGSCGC dans ce cadre). Les illustrations du guide ne sont pas reprises : réfère-toi au PDF pour les schémas.</p>
+</div>
+<script src="gto_lspcc.js"></script>
+<script src="gto_etab.js"></script>
+<script>
+(function () {
+  var docKey = "lspcc";
+  try { docKey = new URLSearchParams(location.search).get("doc") || "lspcc"; } catch (e) {}
+  var DOC = docKey === "etab" ? GTO_ETAB : GTO_LSPCC;
+  if (docKey !== "etab") docKey = "lspcc";
+  document.getElementById("kicker").textContent = docKey === "etab" ? "GTO Établissements" : "GTO Sauvetages et mises en sécurité";
+  document.getElementById("title").textContent = docKey === "etab" ? "Les établissements" : "Le LSPCC";
+  document.getElementById("sub").textContent = DOC.doc + " · " + DOC.cards.length + " questions, dans l'ordre du guide.";
+  document.getElementById("cardsLink").href = "revision.html?cat=" + docKey;
+  document.title = (docKey === "etab" ? "Établissements" : "LSPCC") + " · Cours";
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // Regroupe par partie, dans l'ordre des pages.
+  var groups = [], bySec = {};
+  DOC.cards.slice().sort(function (a, b) { return a.p - b.p; }).forEach(function (c) {
+    if (!bySec[c.sec]) { bySec[c.sec] = { sec: c.sec, p: c.p, cards: [] }; groups.push(bySec[c.sec]); }
+    bySec[c.sec].cards.push(c);
+  });
+  groups.sort(function (a, b) { return a.p - b.p; });
+  var hide = false, query = "";
+
+  function hl(text) {
+    var t = esc(text);
+    if (!query) return t;
+    var q = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return t.replace(new RegExp("(" + q + ")", "gi"), "<mark>$1</mark>");
+  }
+  function match(c) {
+    if (!query) return true;
+    var all = (c.q + " " + c.a + " " + (c.d || "") + " " + c.ext + " " + c.sec).toLowerCase();
+    return all.indexOf(query.toLowerCase()) >= 0;
+  }
+  function render() {
+    var html = "", toc = "<b>Sommaire</b><ol>", n = 0;
+    groups.forEach(function (g, gi) {
+      var cards = g.cards.filter(match);
+      if (!cards.length) return;
+      n += cards.length;
+      var anchor = "s" + gi;
+      toc += '<li><a href="#' + anchor + '">' + esc(g.sec) + "</a></li>";
+      // extraits sans doublon
+      var seen = {}, exts = [];
+      cards.forEach(function (c) { if (!seen[c.ext]) { seen[c.ext] = 1; exts.push(c); } });
+      var pages = cards.map(function (c) { return c.p; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(", ");
+      html += '<section id="' + anchor + '"><h2>' + esc(g.sec) + '</h2><div class="pg">Page' + (pages.indexOf(",") > 0 ? "s " : " ") + esc(pages) + "</div>";
+      exts.forEach(function (c) { html += '<blockquote><span class="p">Extrait · p. ' + esc(c.p) + "</span>" + hl(c.ext) + "</blockquote>"; });
+      html += '<details class="qs"' + (query ? " open" : "") + "><summary>" + cards.length + " question" + (cards.length > 1 ? "s" : "") + " sur cette partie</summary>";
+      cards.forEach(function (c) {
+        html += '<div class="qa' + (hide ? " hide-a" : "") + '"><div class="q">' + hl(c.q) + '</div><div class="a">' + hl(c.a) + "</div>" + (c.d ? '<div class="d">À retenir : ' + hl(c.d) + "</div>" : "") + "</div>";
+      });
+      html += "</details></section>";
+    });
+    document.getElementById("content").innerHTML = html || '<div class="empty">Aucun résultat.</div>';
+    document.getElementById("toc").innerHTML = toc + "</ol>";
+    document.getElementById("toc").style.display = n ? "" : "none";
+  }
+  document.getElementById("search").addEventListener("input", function (e) { query = e.target.value.trim(); render(); });
+  document.getElementById("hideBtn").addEventListener("click", function (e) {
+    hide = !hide; e.target.setAttribute("aria-pressed", hide); e.target.textContent = hide ? "Montrer les réponses" : "Cacher les réponses";
+    if (hide) document.querySelectorAll("details.qs").forEach(function (d) { d.open = true; });
+    document.querySelectorAll(".qa").forEach(function (q) { q.classList.toggle("hide-a", hide); });
+  });
+  document.getElementById("content").addEventListener("click", function (e) {
+    var qa = e.target.closest(".qa.hide-a"); if (qa) qa.classList.remove("hide-a");
+  });
+  render();
+})();
+</script>
+</body>
+</html>

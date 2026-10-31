@@ -45,6 +45,12 @@
   .links button, .links label { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
   .hint { font-size: .75rem; color: var(--muted); margin-top: 8px; }
   .hidden { display: none; }
+  .detail { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(232,163,58,.14); font-size: .95rem; white-space: pre-wrap; }
+  details.ext { margin-top: 12px; border-left: 4px solid #2b5c8a; background: rgba(43,92,138,.07); border-radius: 0 8px 8px 0; padding: 8px 12px; }
+  details.ext summary { cursor: pointer; font: 700 .8rem/1.4 "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #2b5c8a; }
+  details.ext blockquote { margin: 8px 0 4px; white-space: pre-wrap; font-size: .92rem; font-style: italic; line-height: 1.5; }
+  details.ext .src { font-size: .75rem; color: var(--muted); }
+  @media (prefers-color-scheme: dark) { details.ext summary { color: #8fb6dd; } details.ext { border-left-color: #8fb6dd; } }
   .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
   .kicker { margin-top: 14px; font: 700 .8rem/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
   h1 { font-family: "Barlow Condensed", sans-serif; font-size: 2rem; margin: 2px 0 6px; }
@@ -78,13 +84,15 @@
 <script src="sequences.js"></script>
 <script src="pieces.js"></script>
 <script src="consignes.js"></script>
+<script src="gto_lspcc.js"></script>
+<script src="gto_etab.js"></script>
 <script>
 (function () {
   // --- Paramètres Leitner : 3 boîtes ---------------------------------------
   // Boîte 1 : chaque jour, boîte 2 : tous les 3 jours, boîte 3 : tous les 7 jours.
   var INTERVALS = { 1: 1, 2: 3, 3: 7 };
   var STORAGE_KEY = "leitner-flashcards-v1";
-  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie", manoeuvre: "Manœuvres" };
+  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie", manoeuvre: "Manœuvres", lspcc: "LSPCC", etab: "Établissements" };
 
   // --- Utilitaires ---------------------------------------------------------
   function hash(s) {
@@ -154,10 +162,21 @@
       return { id: hash("consigne|" + c.id), cat: "manoeuvre", theme: c.theme || "Consignes et ordres", q: c.q, a: c.a };
     });
   }
+  // Cartes détaillées tirées des GTO (réponse + explication + extrait).
+  function gtoCards() {
+    var out = [];
+    [["lspcc", typeof GTO_LSPCC !== "undefined" ? GTO_LSPCC : null], ["etab", typeof GTO_ETAB !== "undefined" ? GTO_ETAB : null]].forEach(function (x) {
+      if (!x[1]) return;
+      x[1].cards.forEach(function (c) {
+        out.push({ id: hash("gto|" + c.id), cat: x[0], theme: c.sec, q: c.q, a: c.a, d: c.d, ext: c.ext, p: c.p, doc: x[1].doc });
+      });
+    });
+    return out;
+  }
   function buildCards(list) {
     return list.map(function (c) {
       return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
-    }).concat(pieceCards(), seqCards(), consigneCards());
+    }).concat(pieceCards(), seqCards(), consigneCards(), gtoCards());
   }
   function loadCache() {
     try {
@@ -254,6 +273,8 @@
   (function () {
     var titles = { secourisme: ["Réviser les GDO", "Secourisme", ""], incendie: ["Réviser les GDO", "Incendie", ""],
       manoeuvre: ["Manœuvres incendie", "Cas particuliers", 'Consignes, ordres, établissements, échelles. <a href="eclair.html">⚡ Mode chrono</a>'],
+      lspcc: ["GTO Sauvetages et mises en sécurité", "LSPCC", 'Chaque réponse est suivie de l\'extrait exact du GTO. <a href="cours.html?doc=lspcc">📖 Lire le cours</a>'],
+      etab: ["GTO Établissements", "Établissements", 'ETB-1 à 4 et ETB-6, avec l\'extrait exact du guide. <a href="cours.html?doc=etab">📖 Lire le cours</a>'],
       tout: ["Réviser", "Toutes les cartes", ""] };
     var t = titles[currentCat];
     document.getElementById("kicker").textContent = t[0];
@@ -292,7 +313,7 @@
   var elStage = document.getElementById("stage");
 
   function renderTabs() {
-    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"], ["manoeuvre", "Manœuvres"]];
+    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"], ["manoeuvre", "Manœuvres"], ["lspcc", "LSPCC"], ["etab", "Établissements"]];
     elTabs.innerHTML = defs.map(function (d) {
       var n = cards.filter(function (c) { return d[0] === "tout" || c.cat === d[0]; }).length;
       return '<button class="tab" data-cat="' + d[0] + '" aria-pressed="' + (currentCat === d[0]) + '">' + d[1] + " (" + n + ")</button>";
@@ -341,6 +362,8 @@
     if (c.img) html += '<img class="stepimg" src="' + esc(c.img) + '" alt="Photo de la carte">';
     if (revealed) {
       html += '<div class="a">' + esc(c.a) + "</div>";
+      if (c.d) html += '<div class="detail"><b>À retenir :</b> ' + esc(c.d) + "</div>";
+      if (c.ext) html += '<details class="ext" open><summary>Extrait du GTO · p. ' + esc(c.p) + '</summary><blockquote>' + esc(c.ext) + '</blockquote><div class="src">' + esc(c.doc) + "</div></details>";
       if (c.imgA) html += '<img class="stepimg" src="' + esc(c.imgA) + '" alt="Étape suivante">';
     }
     html += "</div></div>";

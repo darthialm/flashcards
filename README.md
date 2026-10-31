@@ -5,6 +5,7 @@ Site statique, tous les fichiers à la racine du dépôt :
 - `revision.html?cat=secourisme|incendie|manoeuvre` : flashcards Leitner (+ `cards.js`, `pieces.js`, `sequences.js`, `consignes.js`, photos).
 - `placement.html` + `placement.js` : simulateur de placement (rôle, ordre préparatoire, reconnaissance, « Établissez ! », pose, mise en eau, bilan). Les règles sont en haut de `placement.js` (bloc CFG et RULES).
 - `eclair.html` + `situations.js` : mode chrono (lien depuis « Cas particuliers »).
+- `cours.html?doc=lspcc|etab` + `gto_lspcc.js` (80 questions) et `gto_etab.js` (95 questions) : cours GTO dans l'ordre du guide, avec extraits et pages ; les mêmes questions sont en flashcards dans `revision.html?cat=lspcc` / `?cat=etab`.
 - `plan.html` : ancienne version du placement, peut être supprimée.
 
 ## Méthode (3 boîtes)
