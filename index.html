@@ -40,6 +40,10 @@
   .dual { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .dual a { text-align: center; text-decoration: none; font-weight: 600; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
   .dual a:hover, .dual a:focus-visible { border-color: var(--red); color: var(--red); outline: none; }
+  section h3.sub { font: 700 .82rem/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; }
+  section h2 + h3.sub { margin-top: 10px; }
+  section h2 .num svg { display: block; }
+  .soon { font-size: .9rem; color: var(--muted); font-style: italic; }
   footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 10px 16px 30px; }
 </style>
 </head>
@@ -51,52 +55,64 @@
 </div></header>
 <main>
   <section>
-    <h2><span class="num">1</span>Réviser les GDO</h2>
-    <p>Les questions de ton Google Sheet, triées par la méthode Leitner.</p>
-    <div class="grid">
-      <a class="tile" href="revision.html?cat=secourisme">
-        <div class="ic" style="background:#e8f3ec;color:#1f8a4c"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg></div>
-        <div><b>Secourisme</b><span>Bilans, gestes, détresses, protocoles.</span></div>
-      </a>
-      <a class="tile" href="revision.html?cat=incendie">
-        <div class="ic" style="background:#fbe9e5;color:#c8321e"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z"/></svg></div>
-        <div><b>Incendie</b><span>Tuyauterie, matériel, pièces de jonction, tactique.</span></div>
-      </a>
-    </div>
-  </section>
-  <section>
-    <h2><span class="num">2</span>Manœuvres incendie</h2>
-    <p>Ce que dit le chef d'agrès, ce que tu fais, et où tu poses tes tuyaux.</p>
-    <div class="grid">
-      <a class="tile" href="revision.html?cat=manoeuvre">
-        <div class="ic" style="background:#fdf1dc;color:#b7741a"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H8l-4 4zM8 8v2h8V8zm0 3v2h5v-2z"/></svg></div>
-        <div><b>Cas particuliers</b><span>Questions : consignes, ordres, RAPACE, établissements, échelles en photos.</span></div>
-      </a>
-      <a class="tile" href="placement.html">
-        <div class="ic" style="background:#e4edf6;color:#2b5c8a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 19c3-1 3-6 7-6s3 5 7 3"/><circle cx="18" cy="6" r="2.5"/><circle cx="4" cy="19" r="1.5" fill="currentColor"/></svg></div>
-        <div><b>Placement</b><span>Ordre préparatoire, reconnaissance, « Établissez ! » : lance tes tuyaux et fais ta réserve.</span></div>
-      </a>
-    </div>
-  </section>
-  <section>
-    <h2><span class="num">3</span>GTO à connaître par cœur</h2>
-    <p>Questions détaillées, chacune avec l'extrait exact du guide et sa page. Lis le cours, puis révise en flashcards.</p>
+    <h2><span class="num" style="background:#c8321e"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z"/></svg></span>Équipier incendie</h2>
+    <h3 class="sub">GDO</h3>
+    <p>Le cours avec l'extrait exact du guide et sa page, puis les flashcards (méthode Leitner, 3 boîtes).</p>
     <div class="grid">
       <div class="tile" style="flex-direction:column;gap:10px">
         <div style="display:flex;gap:14px;align-items:flex-start">
           <div class="ic" style="background:#efe7f7;color:#6b3fa0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v6M8 8h8M12 8c0 5-4 6-4 10a4 4 0 0 0 8 0"/><circle cx="12" cy="20" r="1.4" fill="currentColor"/></svg></div>
-          <div><b>LSPCC</b><span>Lot de sauvetage et de protection contre les chutes : composition, facteur de chute, ancrage, amarrage, techniques, nœuds.</span></div>
+          <div><b>LSPCC</b><span>Lot de sauvetage et de protection contre les chutes : composition, facteur de chute, ancrage, amarrage, techniques, nœuds, qui fait quoi.</span></div>
         </div>
         <div class="dual"><a href="cours.html?doc=lspcc">📖 Cours</a><a href="revision.html?cat=lspcc">🃏 Flashcards</a></div>
       </div>
       <div class="tile" style="flex-direction:column;gap:10px">
         <div style="display:flex;gap:14px;align-items:flex-start">
           <div class="ic" style="background:#e4edf6;color:#2b5c8a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 18h4l3-6 4 8 3-6h4"/></svg></div>
-          <div><b>Établissements</b><span>Hydraulique, sécurité, ordres, LDT, divisions, ligne d'attaque, alimentation, remplacement de tuyau.</span></div>
+          <div><b>Établissements</b><span>Hydraulique, sécurité, ordres, LDT, divisions, ligne d'attaque, alimentation, remplacement de tuyau, qui fait quoi.</span></div>
         </div>
         <div class="dual"><a href="cours.html?doc=etab">📖 Cours</a><a href="revision.html?cat=etab">🃏 Flashcards</a></div>
       </div>
+      <div class="tile" style="flex-direction:column;gap:10px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div class="ic" style="background:#fdf1dc;color:#b7741a"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H8l-4 4zM8 8v2h8V8zm0 3v2h5v-2z"/></svg></div>
+          <div><b>Points particuliers</b><span>Consignes du chef d'agrès, ordres, RAPACE, ARI, échelles en photos.</span></div>
+        </div>
+        <div class="dual" style="grid-template-columns:1fr"><a href="revision.html?cat=manoeuvre">🃏 Flashcards</a></div>
+      </div>
     </div>
+    <h3 class="sub">Manœuvre</h3>
+    <div class="grid">
+      <div class="tile" style="flex-direction:column;gap:10px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div class="ic" style="background:#e4edf6;color:#2b5c8a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 19c3-1 3-6 7-6s3 5 7 3"/><circle cx="18" cy="6" r="2.5"/><circle cx="4" cy="19" r="1.5" fill="currentColor"/></svg></div>
+          <div><b>Placement</b><span>Ordre préparatoire, reconnaissance, « Établissez ! » : tu lances tes tuyaux et tu fais ta réserve.</span></div>
+        </div>
+        <div class="dual" style="grid-template-columns:1fr"><a href="placement.html">▶ Jouer</a></div>
+      </div>
+      <div class="tile" style="flex-direction:column;gap:10px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div class="ic" style="background:#fdecea;color:#c8321e"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+          <div><b>Mode chrono</b><span>Une consigne tombe, tu as quelques secondes pour savoir quoi faire.</span></div>
+        </div>
+        <div class="dual" style="grid-template-columns:1fr"><a href="eclair.html">▶ Jouer</a></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2><span class="num" style="background:#1f8a4c"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg></span>Équipier SUAP</h2>
+    <h3 class="sub">GDO</h3>
+    <div class="grid">
+      <div class="tile" style="flex-direction:column;gap:10px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div class="ic" style="background:#e8f3ec;color:#1f8a4c"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg></div>
+          <div><b>Secourisme</b><span>Bilans, gestes, détresses, protocoles : les questions de ton Google Sheet.</span></div>
+        </div>
+        <div class="dual" style="grid-template-columns:1fr"><a href="revision.html?cat=secourisme">🃏 Flashcards</a></div>
+      </div>
+    </div>
+    <h3 class="sub">Manœuvre</h3>
+    <p class="soon">Rien pour l'instant : dis-moi ce que tu veux travailler.</p>
   </section>
 </main>
 <footer>Contenu tiré de tes cours et des guides de doctrine : à valider avec ton formateur.</footer>

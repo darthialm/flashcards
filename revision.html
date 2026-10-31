@@ -92,7 +92,7 @@
   // Boîte 1 : chaque jour, boîte 2 : tous les 3 jours, boîte 3 : tous les 7 jours.
   var INTERVALS = { 1: 1, 2: 3, 3: 7 };
   var STORAGE_KEY = "leitner-flashcards-v1";
-  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie", manoeuvre: "Manœuvres", lspcc: "LSPCC", etab: "Établissements" };
+  var CAT_LABELS = { secourisme: "Secourisme", incendie: "Incendie", manoeuvre: "Points particuliers", lspcc: "LSPCC", etab: "Établissements" };
 
   // --- Utilitaires ---------------------------------------------------------
   function hash(s) {
@@ -173,10 +173,12 @@
     });
     return out;
   }
+  // Catégories masquées pour l'instant (questions GDO incendie du Sheet + pièces de jonction).
+  var HIDDEN_CATS = { incendie: true };
   function buildCards(list) {
-    return list.map(function (c) {
+    return list.filter(function (c) { return !HIDDEN_CATS[c.cat]; }).map(function (c) {
       return { id: hash(c.cat + "|" + c.q), cat: c.cat, theme: c.theme, q: c.q, a: c.a };
-    }).concat(pieceCards(), seqCards(), consigneCards(), gtoCards());
+    }).concat(pieceCards(), seqCards(), consigneCards(), gtoCards()).filter(function (c) { return !HIDDEN_CATS[c.cat]; });
   }
   function loadCache() {
     try {
@@ -271,10 +273,10 @@
   var PARAM_CAT = (function () { try { return new URLSearchParams(location.search).get("cat"); } catch (e) { return null; } })();
   var currentCat = (PARAM_CAT && CAT_LABELS[PARAM_CAT]) ? PARAM_CAT : "tout";
   (function () {
-    var titles = { secourisme: ["Réviser les GDO", "Secourisme", ""], incendie: ["Réviser les GDO", "Incendie", ""],
-      manoeuvre: ["Manœuvres incendie", "Cas particuliers", 'Consignes, ordres, établissements, échelles. <a href="eclair.html">⚡ Mode chrono</a>'],
-      lspcc: ["GTO Sauvetages et mises en sécurité", "LSPCC", 'Chaque réponse est suivie de l\'extrait exact du GTO. <a href="cours.html?doc=lspcc">📖 Lire le cours</a>'],
-      etab: ["GTO Établissements", "Établissements", 'ETB-1 à 4 et ETB-6, avec l\'extrait exact du guide. <a href="cours.html?doc=etab">📖 Lire le cours</a>'],
+    var titles = { secourisme: ["Équipier SUAP · GDO", "Secourisme", ""], incendie: ["Réviser les GDO", "Incendie", ""],
+      manoeuvre: ["Équipier incendie · GDO", "Points particuliers", 'Consignes, ordres, RAPACE, échelles. <a href="eclair.html">⚡ Mode chrono</a>'],
+      lspcc: ["Équipier incendie · GDO", "LSPCC", 'Chaque réponse est suivie de l\'extrait exact du GTO. <a href="cours.html?doc=lspcc">📖 Lire le cours</a>'],
+      etab: ["Équipier incendie · GDO", "Établissements", 'ETB-1 à 4 et ETB-6, avec l\'extrait exact du guide. <a href="cours.html?doc=etab">📖 Lire le cours</a>'],
       tout: ["Réviser", "Toutes les cartes", ""] };
     var t = titles[currentCat];
     document.getElementById("kicker").textContent = t[0];
@@ -313,7 +315,7 @@
   var elStage = document.getElementById("stage");
 
   function renderTabs() {
-    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["incendie", "Incendie"], ["manoeuvre", "Manœuvres"], ["lspcc", "LSPCC"], ["etab", "Établissements"]];
+    var defs = [["tout", "Tout"], ["secourisme", "Secourisme"], ["manoeuvre", "Points particuliers"], ["lspcc", "LSPCC"], ["etab", "Établissements"]];
     elTabs.innerHTML = defs.map(function (d) {
       var n = cards.filter(function (c) { return d[0] === "tout" || c.cat === d[0]; }).length;
       return '<button class="tab" data-cat="' + d[0] + '" aria-pressed="' + (currentCat === d[0]) + '">' + d[1] + " (" + n + ")</button>";
